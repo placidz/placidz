@@ -1,0 +1,95 @@
+# -------------------------------------------------------------------
+# Environment
+WORKDIR = .
+SRCDIR	= .
+INCDIR	= .
+OBJDIR	= $(WORKDIR)/.obj
+DEPDIR	= $(WORKDIR)/.dep
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# 'Tools' directory
+TOOLDIR = $(WORKDIR)/../../gmtools
+TOOLINC = -I $(TOOLDIR)/ml/inc -I $(TOOLDIR)/he/inc
+TOOLLIB = $(TOOLDIR)/ml/lib/libml.a $(TOOLDIR)/he/lib/libhe.a
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# Files
+SOURCES	= $(wildcard $(SRCDIR)/*.c)
+HEADERS	= $(wildcard $(INCDIR)/*.h)
+OBJECTS	= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+DEPS	= $(SOURCES:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# Compiler and flags
+CC		= gcc
+CFLAGS	= -ansi -pedantic -D_GNU_SOURCE -O3 -W -Wall -Werror -Wno-unused -ggdb3
+INCS	= $(TOOLINC)
+LIBS	= $(TOOLLIB)
+
+ifdef windir
+	LIBS += -l opengl32 -l glu32 -l glut32
+else
+	ifeq ($(shell uname),Darwin)
+		LIBS += -framework GLUT -framework OpenGL -framework Accelerate
+	else
+		LIBS += -lGL -lGLU -lglut
+	endif
+endif
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# Binaries
+ECHO	= /bin/echo
+RM		= rm
+CP		= cp
+BNAME	= basename
+SED		= sed
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# Rules
+all : $(TARGET)
+
+$(TARGET) : $(OBJECTS)
+	@$(ECHO) -n "+ Building binary '`$(BNAME) $@`' : "
+	@$(CC) $(CFLAGS) $(INCS) $^ $(LIBS) -o $@
+	@$(ECHO) "OK"
+
+$(DEPDIR)/%.d : $(SRCDIR)/%.c
+	@$(ECHO) -n "@ Generating dependencies of '`$(BNAME) $<`' : "
+	@$(CC) $(CFLAGS) $(INCS) -MM -MG $< | $(SED) -e 's,^\([^:]*\)\.o[ ]*:,$(OBJDIR)/\1.o $(DEPDIR)/\1.d:,' > $@
+	@$(ECHO) "OK"
+
+$(OBJDIR)/%.o : $(SRCDIR)/%.c
+	@$(ECHO) -n "~ Compilation of '`$(BNAME) $<`' : "
+	@$(CC) $(CFLAGS) $(INCS) -c $< -o $@
+	@$(ECHO) "OK"
+	
+clean :
+	@$(ECHO) -n "- Deleting : "
+	@$(RM) -f $(OBJECTS) $(TARGET)
+	@$(ECHO) "OK"
+	
+clean-all :
+	@$(ECHO) -n "- Deleting : "
+	@$(RM) -f $(OBJECTS) $(TARGET) $(DEPS)
+	@$(ECHO) "OK"
+# -------------------------------------------------------------------
+
+
+# -------------------------------------------------------------------
+# Includes
+ifneq ($(MAKECMDGOALS),clean)
+ifneq ($(MAKECMDGOALS),clean-all)
+-include $(DEPS)
+endif
+endif
+# -------------------------------------------------------------------
