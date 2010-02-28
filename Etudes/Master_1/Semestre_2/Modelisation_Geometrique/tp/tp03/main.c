@@ -1,0 +1,238 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#ifdef __APPLE__
+	#include <OpenGL/gl.h>
+	#include <OpenGL/glu.h>
+	#include <GLUT/glut.h>
+#else
+	#include <GL/gl.h>
+	#include <GL/glu.h>
+	#include <GL/glut.h>
+#endif
+
+
+#include <ml.h>
+
+
+#define MAX		20
+#define MAX2	100
+
+mlVec3 ctrl		[MAX];
+mlVec3 bP  		[MAX2];
+
+int nCtrl = 0; /* nombre de points de contrôle */
+int nBP = 5; /* nombre de points de la courbe */
+int degreBS = 3;
+
+int affBSpline = 0;
+
+int winX	  = 800;
+int winY	  = 600;
+
+
+int fact(int _i)
+{
+	if (_i > 1) return (_i*fact(_i-1));
+    else return (1);
+}
+
+
+double computeRiesenfeldCoeff(int _i, int _m, double _t)
+{
+	int k;
+	double somme = 0;
+	for (k = 0; k <= _m-_i; k++)
+	{
+		somme += pow(-1, k) * (pow(_t+_m-_i-k, _m)/(fact(k)*fact(_m-k+1)));
+	}
+	return ((_m+1)*somme);
+}
+
+
+void computeBSplinePoint(mlVec3 _ctrl[MAX], int _m, int _k, double _t, mlVec3 _q)
+{
+	int i;
+	float x = 0, y = 0, z = 0;
+	for (i = 0; i <= _m; i++)
+	{
+		double riesenfeldCoeff = computeRiesenfeldCoeff(i, _m, _t);
+		x += riesenfeldCoeff * _ctrl[i+_k][0];
+		y += riesenfeldCoeff * _ctrl[i+_k][1];
+		z += riesenfeldCoeff * _ctrl[i+_k][2];
+	}
+	mlVec3_Set(_q, x, y, z);
+}
+
+
+void computeBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP, int _m)
+{
+	int i, k;
+	for(k = 0; k < _nCtrl-_m; k++)
+	{	
+		for(i = k*(nBP+1); i < ((_nBP+1)*(k+1)); i++)
+		{
+			computeBSplinePoint(_ctrl, _m, k, i/(double)(_nBP*(k+1)), _bP[i]);
+		}
+	}
+}
+
+
+void drawBSplineCurve(mlVec3 _bP[MAX2], int _nBP)
+{
+	int i;
+	int k = nCtrl - degreBS;
+	glBegin(GL_LINE_STRIP);
+	glColor3f(0.0, 0.0, 1.0);
+	
+	for (i = 0; i < (_nBP+1)*k; i++)
+	{
+		glVertex3f(_bP[i][0], winY-_bP[i][1], _bP[i][2]);
+	}
+	glEnd();
+}
+
+
+void drawPoints(void)
+{
+	int i;
+	for (i = 0; i < nCtrl; i++)
+	{
+		glBegin(GL_POINTS);
+		glColor3f(0.0, 0.0, 0.0);
+		glVertex2f(ctrl[i][0], winY-ctrl[i][1]);
+		glEnd();
+	} 
+}
+
+
+void displayGL()
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+	if (affBSpline)
+	{
+		computeBSplineCurve(ctrl, nCtrl, bP, nBP, degreBS);
+		drawBSplineCurve(bP, nBP);
+	}
+	drawPoints();
+	glutSwapBuffers();
+}
+
+
+void reshapeGL(int _w, int _h)
+{
+	winX = _w;
+	winY = _h;
+	
+	glViewport(0, 0, winX, winY);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	
+	gluOrtho2D(0.0, winX, 0.0, winY);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	
+	glutPostRedisplay();
+}
+
+
+void mouseGL(int _button, int _state, int _x, int _y)
+{
+	if (_state == GLUT_DOWN)
+	{	
+		if (nCtrl < MAX)
+		{
+			mlVec3_Set(ctrl[nCtrl], _x, _y, 0);
+			nCtrl++;
+		}
+	}
+	glutPostRedisplay();
+}
+
+
+void keyboardGL(unsigned char _k, int _x, int _y)
+{
+	if(_k == 27 || _k == 'q' || _k == 'Q')
+		exit(0);
+	switch(_k)
+	{
+		case 'n':
+			nBP--;
+		break;
+		
+		case 'N':
+			nBP++;
+		break;
+		
+		case 'e':
+			nCtrl = 0;
+		break;
+		
+		case 'b':
+			nBP = 5;
+			affBSpline = !affBSpline;
+		break;
+	}
+
+	glutPostRedisplay();
+}
+
+
+void keyboardSpecialGL(int _k, int _x, int _y)
+{
+	glutPostRedisplay();
+}
+
+
+void motionGL(int _x, int _y)
+{
+	glutPostRedisplay();
+}
+
+
+void passiveMotionGL(int _x, int _y)
+{
+	glutPostRedisplay();
+}
+
+
+void initGL()
+{
+	glClearColor(0.8, 0.8, 0.7, 1.0);
+	
+}
+
+
+int main(int _argc, char ** _argv)
+{
+	int posX, posY;
+	
+	glutInit(&_argc, _argv);	
+	
+	posX = (glutGet(GLUT_SCREEN_WIDTH ) - winX) / 2;
+	posY = (glutGet(GLUT_SCREEN_HEIGHT) - winY) / 2;
+	
+	glutInitWindowSize(winX, winY);
+	glutInitWindowPosition(posX, posY);
+	
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
+	glutCreateWindow("[TP03] Modelisation Geometrique - Courbes BSplines");
+	
+	glutDisplayFunc(displayGL);
+	glutReshapeFunc(reshapeGL);
+	
+	glutMouseFunc(mouseGL);
+	glutKeyboardFunc(keyboardGL);
+	glutSpecialFunc(keyboardSpecialGL);
+	
+	glutMotionFunc(motionGL);
+	glutPassiveMotionFunc(passiveMotionGL);
+		
+	glPointSize(5.0);
+	
+	initGL();
+	glutMainLoop();
+
+	return 0;
+}
