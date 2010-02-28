@@ -24,18 +24,20 @@ float tx=0.0, ty=0.0, tz=0.0;
 
 void drawRectangle()
 {
-	glShadeModel(modeColoration);
-	
-	glBegin(GL_POLYGON);
 	glPolygonMode(GL_FRONT, modeRendu);
+	glShadeModel(modeColoration);
+	glBegin(GL_POLYGON);
 		glColor3f(0.0, 0.0, 0.0);
-		glVertex3f(-2.0, 1.0, 0.0);
-		glColor3f(1.0, 0.0, 0.0);
+		
 		glVertex3f(2.0, 1.0, 0.0);
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex3f(-2.0, 1.0, 0.0);
 		glColor3f(0.0, 1.0, 0.0);
-		glVertex3f(2.0, -1.0, 0.0);
-		glColor3f(0.0, 0.0, 1.0);
 		glVertex3f(-2.0, -1.0, 0.0);
+		
+		glColor3f(0.0, 0.0, 1.0);
+		glVertex3f(2.0, -1.0, 0.0);
+		
 	glEnd();
 }
 
@@ -54,6 +56,7 @@ void drawPoints()
 
 void drawTriangle()
 {
+	glPolygonMode(GL_FRONT, GL_FILL);
 	glColor3f(1.0, 0.0, 0.0);
 	glTranslatef(tx, ty, tz);
 	glBegin(GL_TRIANGLES);
