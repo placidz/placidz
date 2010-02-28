@@ -24,9 +24,9 @@ float tx=0.0, ty=0.0, tz=0.0;
 
 void drawRectangle()
 {
-	glPolygonMode(GL_FRONT, modeRendu);
 	glShadeModel(modeColoration);
 	glBegin(GL_POLYGON);
+	glPolygonMode(GL_FRONT, modeRendu);
 		glColor3f(0.0, 0.0, 0.0);
 		glVertex3f(-2.0, 1.0, 0.0);
 		glColor3f(1.0, 0.0, 0.0);
@@ -68,9 +68,9 @@ void displayGL()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 	gluLookAt(camX, camY, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	drawTriangle();
 	drawRectangle();
 	if (affPoints) drawPoints();
-	drawTriangle();
 	glutSwapBuffers();
 }
 
