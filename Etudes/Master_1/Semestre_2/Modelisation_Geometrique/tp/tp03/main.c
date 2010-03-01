@@ -17,7 +17,7 @@
 
 
 #define MAX		20
-#define MAX2	100
+#define MAX2	1000
 
 mlVec3 ctrl		[MAX];
 mlVec3 bP  		[MAX2];
@@ -27,10 +27,14 @@ int nBP = 5; /* nombre de points de la courbe */
 int degreBS = 3;
 
 int affBSpline = 0;
+int bMovePoint = 0;
 
 int winX	  = 800;
 int winY	  = 600;
 
+int indPt = -1;
+int mouseX, mouseY;
+int haha;
 
 int fact(int _i)
 {
@@ -70,7 +74,7 @@ void computeBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _n
 {
 	int i, k;
 	for(k = 0; k < _nCtrl-_m; k++)
-	{	
+	{
 		for(i = k*(nBP+1); i < ((_nBP+1)*(k+1)); i++)
 		{
 			computeBSplinePoint(_ctrl, _m, k, i/(double)(_nBP*(k+1)), _bP[i]);
@@ -85,7 +89,7 @@ void drawBSplineCurve(mlVec3 _bP[MAX2], int _nBP)
 	int k = nCtrl - degreBS;
 	glBegin(GL_LINE_STRIP);
 	glColor3f(0.0, 0.0, 1.0);
-	
+
 	for (i = 0; i < (_nBP+1)*k; i++)
 	{
 		glVertex3f(_bP[i][0], winY-_bP[i][1], _bP[i][2]);
@@ -103,7 +107,21 @@ void drawPoints(void)
 		glColor3f(0.0, 0.0, 0.0);
 		glVertex2f(ctrl[i][0], winY-ctrl[i][1]);
 		glEnd();
-	} 
+	}
+}
+
+int trouverPoint(int _x, int _y)
+{
+    int i, ind = -1;
+	int Px, Py;
+	for (i = 0; i < nCtrl && ind == -1; i++)
+	{
+		Px = ctrl[i][0];
+		Py = ctrl[i][1];
+		if (Px >= _x-10 && Px <= _x+10 && Py >= _y-10 && Py <= _y+10)
+			ind = i;
+	}
+	return ind;
 }
 
 
@@ -124,29 +142,46 @@ void reshapeGL(int _w, int _h)
 {
 	winX = _w;
 	winY = _h;
-	
+
 	glViewport(0, 0, winX, winY);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	
+
 	gluOrtho2D(0.0, winX, 0.0, winY);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	
+
 	glutPostRedisplay();
 }
 
 
 void mouseGL(int _button, int _state, int _x, int _y)
 {
-	if (_state == GLUT_DOWN)
-	{	
-		if (nCtrl < MAX)
-		{
-			mlVec3_Set(ctrl[nCtrl], _x, _y, 0);
-			nCtrl++;
-		}
-	}
+    switch(_button)
+    {
+        case GLUT_LEFT:
+            if (_state == GLUT_DOWN)
+            {
+                indPt = trouverPoint(_x, _y);
+                if (indPt != -1)
+                {
+                    bMovePoint = 1;
+                }
+                else
+                {
+                    if (nCtrl < MAX)
+                    {
+                        mlVec3_Set(ctrl[nCtrl], _x, _y, 0);
+                        nCtrl++;
+                    }
+                }
+            }
+            if (_state == GLUT_UP)
+            {
+                if (bMovePoint) bMovePoint = 0;
+            }
+        break;
+    }
 	glutPostRedisplay();
 }
 
@@ -160,15 +195,15 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		case 'n':
 			nBP--;
 		break;
-		
+
 		case 'N':
 			nBP++;
 		break;
-		
+
 		case 'e':
 			nCtrl = 0;
 		break;
-		
+
 		case 'b':
 			nBP = 5;
 			affBSpline = !affBSpline;
@@ -187,6 +222,12 @@ void keyboardSpecialGL(int _k, int _x, int _y)
 
 void motionGL(int _x, int _y)
 {
+    if (bMovePoint)
+    {
+        ctrl[indPt][0] = _x;
+        ctrl[indPt][1] = _y;
+    }
+
 	glutPostRedisplay();
 }
 
@@ -200,37 +241,37 @@ void passiveMotionGL(int _x, int _y)
 void initGL()
 {
 	glClearColor(0.8, 0.8, 0.7, 1.0);
-	
+
 }
 
 
 int main(int _argc, char ** _argv)
 {
 	int posX, posY;
-	
-	glutInit(&_argc, _argv);	
-	
+
+	glutInit(&_argc, _argv);
+
 	posX = (glutGet(GLUT_SCREEN_WIDTH ) - winX) / 2;
 	posY = (glutGet(GLUT_SCREEN_HEIGHT) - winY) / 2;
-	
+
 	glutInitWindowSize(winX, winY);
 	glutInitWindowPosition(posX, posY);
-	
+
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	glutCreateWindow("[TP03] Modelisation Geometrique - Courbes BSplines");
-	
+
 	glutDisplayFunc(displayGL);
 	glutReshapeFunc(reshapeGL);
-	
+
 	glutMouseFunc(mouseGL);
 	glutKeyboardFunc(keyboardGL);
 	glutSpecialFunc(keyboardSpecialGL);
-	
+
 	glutMotionFunc(motionGL);
 	glutPassiveMotionFunc(passiveMotionGL);
-		
+
 	glPointSize(5.0);
-	
+
 	initGL();
 	glutMainLoop();
 
