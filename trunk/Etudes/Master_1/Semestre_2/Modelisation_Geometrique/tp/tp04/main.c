@@ -17,10 +17,36 @@
 int winX = 800;
 int winY = 600;
 int modeRendu = GL_FILL;
-int affPoints = 0;
+
 int modeColoration = GL_SMOOTH;
-float camX=0.0, camY=0.0, camZ=15.0;
+float camX=0.0, camY=0.0, camZ=10.0;
 float tx=0.0, ty=0.0, tz=0.0;
+
+int bModeProjection = 1;
+int bAffPoints = 0;
+int bAffRectangle = 1;
+int bAffBox = 0;
+
+void drawRepere()
+{
+	glLineWidth(2.0);
+	glColor3f(1.0, 0.0, 0.0);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(1.0, 0.0, 0.0);
+	glEnd();
+	glColor3f(0.0, 1.0, 0.0);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 1.0, 0.0);
+	glEnd();
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+		glVertex3f(0.0, 0.0, 0.0);
+		glVertex3f(0.0, 0.0, 1.0);
+	glEnd();
+	glLineWidth(1.0);
+}
 
 void drawRectangle()
 {
@@ -37,7 +63,6 @@ void drawRectangle()
 		
 		glColor3f(0.0, 0.0, 1.0);
 		glVertex3f(2.0, -1.0, 0.0);
-		
 	glEnd();
 }
 
@@ -58,23 +83,81 @@ void drawTriangle()
 {
 	glPolygonMode(GL_FRONT, GL_FILL);
 	glColor3f(1.0, 0.0, 0.0);
+	glPushMatrix();
 	glTranslatef(tx, ty, tz);
 	glBegin(GL_TRIANGLES);
 		glVertex3f(5.0, 0.0, 0.0);
 		glVertex3f(7.0, 0.0, 0.0);
 		glVertex3f(6.0, 2.0, 0.0);
 	glEnd();
+	glPopMatrix();
 }
 
+void drawBox(float _size)
+{
+	float s = _size;
+	glPolygonMode(GL_BACK, GL_LINE);
+	/* Face avant */
+	glBegin(GL_QUADS);
+		glColor3f(1.0, 0.0, 0.0);
+		glVertex3f(s, -s, s);
+		glVertex3f(s, s, s);
+		glVertex3f(-s, s, s);
+		glVertex3f(-s, -s, s);
+	glEnd();
+	/* Face arrière */
+	glBegin(GL_QUADS);
+		glColor3f(0.0, 1.0, 0.0);
+		glVertex3f(-s, s, -s);
+		glVertex3f(s, s, -s);
+		glVertex3f(s, -s, -s);
+		glVertex3f(-s, -s, -s);
+	glEnd();
+	/* Face basse */
+	glBegin(GL_QUADS);
+		glColor3f(0.0, 0.0, 1.0);
+		glVertex3f(-s, -s, s);
+		glVertex3f(-s, -s, -s);
+		glVertex3f(s, -s, -s);
+		glVertex3f(s, -s, s);
+	glEnd();
+	/* Face droite */
+	glBegin(GL_QUADS);
+		glColor3f(1.0, 1.0, 0.0);
+		glVertex3f(s, -s, s);
+		glVertex3f(s, -s, -s);
+		glVertex3f(s, s, -s);
+		glVertex3f(s, s, s);
+	glEnd();
+	/* Face gauche */
+	glBegin(GL_QUADS);
+		glColor3f(0.0, 1.0, 1.0);
+		glVertex3f(-s, -s, s);
+		glVertex3f(-s, s, s);
+		glVertex3f(-s, s, -s);
+		glVertex3f(-s, -s, -s);
+	glEnd();
+}
 
 void displayGL()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	gluLookAt(camX, camY, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
-	drawRectangle();
-	if (affPoints) drawPoints();
+	if (bModeProjection)
+	{
+		gluLookAt(camX, camY, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+	}
+	else
+	{
+		glTranslated(camX, camY, -camZ);
+	}
+	glMultMatrixd(mlTbGetRotation());
+	
+	if (bAffPoints) drawPoints();
+	if (bAffRectangle) drawRectangle();
+	if (bAffBox) drawBox(2);
 	drawTriangle();
+	drawRepere();
 	glutSwapBuffers();
 }
 
@@ -88,7 +171,14 @@ void reshapeGL(int _w, int _h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	
-	gluPerspective(60.0, (GLfloat)_w/(GLfloat)_h, 0.1, 128.0);
+	if (bModeProjection)
+	{
+		gluPerspective(60.0, (GLfloat)_w/(GLfloat)_h, 0.1, 200.0);
+	}
+	else
+	{
+		gluOrtho2D(0.0, _w, 0.0, _h);
+	}
 	
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -99,6 +189,23 @@ void reshapeGL(int _w, int _h)
 
 void mouseGL(int _button, int _state, int _x, int _y)
 {
+	switch (_button)
+	{
+		case GLUT_LEFT_BUTTON:
+			if (_state==GLUT_DOWN)
+			{
+				mlTbClick(_x,_y);
+			}
+			if (_state==GLUT_UP)
+			{
+				mlTbRelease(_x,_y);
+			}
+		break ;
+		case GLUT_RIGHT_BUTTON:
+		break;
+		default:
+		break;
+	}
 	glutPostRedisplay();
 }
 
@@ -115,7 +222,7 @@ void ChoixMenuPrincipal(int value)
 		break;
 		
 		case 3:
-			affPoints = !affPoints;
+			bAffPoints = !bAffPoints;
 		break;
 		
 		case 4:
@@ -124,6 +231,10 @@ void ChoixMenuPrincipal(int value)
 		
 		case 5:
 			modeColoration = GL_FLAT;
+		break;
+		
+		case 6:
+			bModeProjection = !bModeProjection;
 		break;
 	
 		case 11 :
@@ -144,6 +255,8 @@ void CreerMenu(void)
 	glutAddMenuEntry("Couleurs - Interpolation", 4);
 	glutAddMenuEntry("Couleurs - Unique", 5);
 	glutAddMenuEntry("--------------------", -1);
+	glutAddMenuEntry("Mode de Projection", 6);
+	glutAddMenuEntry("--------------------", -1);
 	glutAddMenuEntry("Quitter", 11);
 	
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -157,6 +270,7 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 	
 	switch(_k)
 	{
+		/* Déplacement de la caméra */
 		case 'o':
 			camY+= 1.0;
 		break;
@@ -176,6 +290,7 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 			camZ-= 1.0;
 		break;
 		
+		/* Déplacement du triangle */
 		case 'q':
 			tx-= 1.0;
 		break;
@@ -194,6 +309,12 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		case 'f':
 			tz-= 1.0;
 		break;
+		
+		case 'b':
+			bAffRectangle = !bAffRectangle;
+			bAffBox = !bAffBox;
+			bAffPoints = !bAffPoints;
+		break;
 	}
 
 	glutPostRedisplay();
@@ -208,6 +329,7 @@ void keyboardSpecialGL(int _k, int _x, int _y)
 
 void motionGL(int _x, int _y)
 {
+	mlTbMotion(_x,_y);
 	glutPostRedisplay();
 }
 
@@ -221,6 +343,8 @@ void passiveMotionGL(int _x, int _y)
 void initGL()
 {
 	glClearColor(0.8, 0.8, 0.7, 1.0);
+	glEnable(GL_DEPTH_TEST);
+	mlTbInit(winX,winY);
 }
 
 
