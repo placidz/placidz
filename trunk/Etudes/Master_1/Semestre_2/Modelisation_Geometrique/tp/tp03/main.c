@@ -12,7 +12,6 @@
 	#include <GL/glut.h>
 #endif
 
-
 #include <ml.h>
 
 
@@ -27,12 +26,7 @@ int nBP = 5; /* nombre de points de la courbe */
 int degreBS = 3;
 
 int affBSpline = 0;
-<<<<<<< .mine
 int bMovePoint = 0;
-int ind = -1;
-=======
-int bMovePoint = 0;
->>>>>>> .r13
 
 int winX	  = 800;
 int winY	  = 600;
@@ -117,13 +111,11 @@ void drawPoints(void)
 	}
 }
 
-<<<<<<< .mine
-int TrouverPoint(int x, int y)
+int trouverPoint(int x, int y)
 {
-	printf("LOLOL");
-	int ind = -1;
+	int i, ind = -1;
 	int Px, Py;
-	for (int i = 0; i < nCtrl && ind == -1; i++)
+	for (i = 0; i < nCtrl && ind == -1; i++)
 	{
 		Px = ctrl[i][0];
 		Py = ctrl[i][1];
@@ -133,21 +125,6 @@ int TrouverPoint(int x, int y)
 	}
 	return ind;
 }
-=======
-int trouverPoint(int _x, int _y)
-{
-    int i, ind = -1;
-	int Px, Py;
-	for (i = 0; i < nCtrl && ind == -1; i++)
-	{
-		Px = ctrl[i][0];
-		Py = ctrl[i][1];
-		if (Px >= _x-10 && Px <= _x+10 && Py >= _y-10 && Py <= _y+10)
-			ind = i;
-	}
-	return ind;
-}
->>>>>>> .r13
 
 
 void displayGL()
@@ -182,17 +159,14 @@ void reshapeGL(int _w, int _h)
 
 void mouseGL(int _button, int _state, int _x, int _y)
 {
-<<<<<<< .mine
-	ind = -1;
 	switch (_button)
 	{
 		case GLUT_LEFT_BUTTON:
 		if (_state == GLUT_DOWN)
 		{
-			if (TrouverPoint(_x, _y) != -1)
+			indPt = trouverPoint(_x, _y);
+			if (indPt != -1)
 			{
-				/*printf("LOL");*/
-				ind = TrouverPoint(_x, _y);
 				bMovePoint = 1;
 			}
 			else
@@ -207,38 +181,10 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		if (_state == GLUT_UP) 
 		{
 			bMovePoint = 0;
-			ind = -1;
+			indPt = -1;
 		}
 		break;
-	}
-=======
-    switch(_button)
-    {
-        case GLUT_LEFT:
-            if (_state == GLUT_DOWN)
-            {
-                indPt = trouverPoint(_x, _y);
-                if (indPt != -1)
-                {
-                    bMovePoint = 1;
-                }
-                else
-                {
-                    if (nCtrl < MAX)
-                    {
-                        mlVec3_Set(ctrl[nCtrl], _x, _y, 0);
-                        nCtrl++;
-                    }
-                }
-            }
-            if (_state == GLUT_UP)
-            {
-                if (bMovePoint) bMovePoint = 0;
-            }
-        break;
-    }
->>>>>>> .r13
-	
+	}	
 	
 	glutPostRedisplay();
 }
@@ -280,23 +226,12 @@ void keyboardSpecialGL(int _k, int _x, int _y)
 
 void motionGL(int _x, int _y)
 {
-<<<<<<< .mine
 	if (bMovePoint)
-	{
-		mouseX = _x;
-		mouseY = _y;
-		ctrl[ind][0] = mouseX;
-		ctrl[ind][1] = mouseY;
-	}
-	
-=======
-    if (bMovePoint)
     {
         ctrl[indPt][0] = _x;
         ctrl[indPt][1] = _y;
     }
 
->>>>>>> .r13
 	glutPostRedisplay();
 }
 
