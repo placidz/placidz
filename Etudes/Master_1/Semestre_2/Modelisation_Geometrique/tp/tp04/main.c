@@ -149,7 +149,7 @@ void displayGL()
 	}
 	else
 	{
-		glTranslated(camX, camY, -camZ);
+		/*glTranslated(camX, camY, -camZ);*/
 	}
 	glMultMatrixd(mlTbGetRotation());
 	
@@ -177,7 +177,7 @@ void reshapeGL(int _w, int _h)
 	}
 	else
 	{
-		gluOrtho2D(0.0, _w, 0.0, _h);
+		glOrtho(-10, 10, -10, 10, 0.1, 200.0);
 	}
 	
 	glMatrixMode(GL_MODELVIEW);
@@ -240,7 +240,8 @@ void ChoixMenuPrincipal(int value)
 		case 11 :
 			exit(0); /* On quitte */
 		break;
-	} 
+	}
+	glutPostRedisplay();
 }
 
 void CreerMenu(void)
@@ -313,7 +314,7 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		case 'b':
 			bAffRectangle = !bAffRectangle;
 			bAffBox = !bAffBox;
-			bAffPoints = !bAffPoints;
+			bAffPoints = 0;
 		break;
 	}
 
