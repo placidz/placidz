@@ -35,7 +35,6 @@ int mouseY;
 
 int indPt = -1;
 int mouseX, mouseY;
-int haha;
 
 int fact(int _i)
 {
@@ -73,8 +72,9 @@ void computeBSplinePoint(mlVec3 _ctrl[MAX], int _m, int _k, double _t, mlVec3 _q
 
 void computeBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP, int _m)
 {
-	int i, k;
-	for(k = 0; k < _nCtrl-_m; k++)
+	int i, k, sz;
+	sz = _nCtrl - _m;
+	for(k = 0; k < sz; k++)
 	{
 		for(i = k*(nBP+1); i < ((_nBP+1)*(k+1)); i++)
 		{
@@ -87,7 +87,8 @@ void computeBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _n
 void drawBSplineCurve(mlVec3 _bP[MAX2], int _nBP)
 {
 	int i;
-	int k = nCtrl - degreBS;
+	int k;
+	k = nCtrl - degreBS;
 	glBegin(GL_LINE_STRIP);
 	glColor3f(0.0, 0.0, 1.0);
 
@@ -126,11 +127,10 @@ int trouverPoint(int x, int y)
 	return ind;
 }
 
-
 void displayGL()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	if (affBSpline)
+	if (affBSpline && nCtrl > degreBS)
 	{
 		computeBSplineCurve(ctrl, nCtrl, bP, nBP, degreBS);
 		drawBSplineCurve(bP, nBP);
@@ -203,9 +203,20 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		case 'N':
 			nBP++;
 		break;
+		
+		case 'd':
+			degreBS--;
+		break;
+
+		case 'D':
+			degreBS++;
+		break;
 
 		case 'e':
 			nCtrl = 0;
+		break;
+		
+		case 'l':
 		break;
 
 		case 'b':
