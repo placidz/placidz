@@ -147,10 +147,6 @@ void displayGL()
 	{
 		gluLookAt(camX, camY, camZ, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
 	}
-	else
-	{
-		/*glTranslated(camX, camY, -camZ);*/
-	}
 	glMultMatrixd(mlTbGetRotation());
 	
 	if (bAffPoints) drawPoints();
@@ -177,7 +173,7 @@ void reshapeGL(int _w, int _h)
 	}
 	else
 	{
-		glOrtho(-10, 10, -10, 10, 0.1, 200.0);
+		glOrtho(-10, 10, -10, 10, 0.1, 200);
 	}
 	
 	glMatrixMode(GL_MODELVIEW);
