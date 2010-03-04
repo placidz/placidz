@@ -15,7 +15,7 @@
 #include <ml.h>
 
 
-#define MAX		20
+#define MAX	50
 #define MAX2	1000
 
 mlVec3 ctrl		[MAX];
@@ -220,7 +220,6 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		break;
 
 		case 'b':
-			nBP = 5;
 			affBSpline = !affBSpline;
 		break;
 	}
