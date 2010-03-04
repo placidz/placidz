@@ -325,12 +325,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		break;
 
 		case 'b':
-			nBP = 5;
 			affBezierCurve = !affBezierCurve;
 		break;
 
 		case 'c':
-			nBP = 5;
 			affDeCasteljauCurve = !affDeCasteljauCurve;
 		break;
 
