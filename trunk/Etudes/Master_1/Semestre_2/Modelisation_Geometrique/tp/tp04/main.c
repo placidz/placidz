@@ -26,6 +26,7 @@ int bModeProjection = 1;
 int bAffPoints = 0;
 int bAffRectangle = 1;
 int bAffBox = 0;
+int bCubeFerme = 0;
 
 void drawRepere()
 {
@@ -137,6 +138,17 @@ void drawBox(float _size)
 		glVertex3f(-s, s, -s);
 		glVertex3f(-s, -s, -s);
 	glEnd();
+	if (bCubeFerme)
+	{
+		/* Face haute */
+		glBegin(GL_QUADS);
+			glColor3f(1.0, 0.0, 1.0);
+			glVertex3f(-s, s, s);
+			glVertex3f(s, s, s);
+			glVertex3f(s, s, -s);
+			glVertex3f(-s, s, -s);
+		glEnd();
+	}
 }
 
 void displayGL()
@@ -194,7 +206,7 @@ void mouseGL(int _button, int _state, int _x, int _y)
 			}
 			if (_state==GLUT_UP)
 			{
-				mlTbRelease(_x,_y);
+				/*mlTbRelease(_x,_y);*/
 			}
 		break ;
 		case GLUT_RIGHT_BUTTON:
@@ -305,6 +317,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		break;
 		case 'f':
 			tz-= 1.0;
+		break;
+		
+		case 'c':
+			bCubeFerme = !bCubeFerme;
 		break;
 		
 		case 'b':
