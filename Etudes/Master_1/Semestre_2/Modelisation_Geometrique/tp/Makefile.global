@@ -27,8 +27,8 @@ DEPS	= $(SOURCES:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
 
 # -------------------------------------------------------------------
 # Compiler and flags
-CC		= gcc
-CFLAGS	= -ansi -pedantic -D_GNU_SOURCE -O3 -W -Wall -Werror -Wno-unused -ggdb3
+CC		= g++
+CFLAGS	= -ansi -pedantic -D_GNU_SOURCE -O3 -W -Wall -Wno-unused -ggdb3
 INCS	= $(TOOLINC)
 LIBS	= $(TOOLLIB)
 

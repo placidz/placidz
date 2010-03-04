@@ -11,9 +11,11 @@
 	#include <GL/glut.h>
 #endif
 
-#include <ml.h>
-
 #define MAX 100
+
+extern "C" {
+	#include <ml.h>		
+}
 
 void computeHermiteCoeff(mlVec3 _p1, mlVec3 _pA, mlVec3 _p2, mlVec3 _pB);
 void drawCurve(mlVec4 _cx, mlVec4 _cy, mlVec4 _cz, int _nPoints);
