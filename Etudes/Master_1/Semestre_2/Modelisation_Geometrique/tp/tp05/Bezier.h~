@@ -1,14 +1,12 @@
 #ifndef BEZIER_H
 #define BEZIER_H
-extern "C"
-{
-#include <ml.h>
-}
+#include <../../gmtools/ml/inc/ml.h>
 
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <math.h>
+
 
 #include "defines.h"
 

@@ -1,14 +1,12 @@
 #ifndef BSPLINE_H
 #define BSPLINE_H
-extern "C"
-{
 #include <ml.h>
-}
 
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glut.h>
 #include <math.h>
+
 
 #include "defines.h"
 
