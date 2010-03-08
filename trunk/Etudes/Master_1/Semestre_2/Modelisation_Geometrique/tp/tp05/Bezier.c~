@@ -7,16 +7,16 @@ Bezier::Bezier()
 	tConstruction = 0.5;
 }
 
-Bezier::~Bezier()
-{
-}
-
 Bezier::Bezier(int _winY)
 {
 	nCtrl = 0;
 	nBP = 5;
 	tConstruction = 0.5;
 	winY = _winY;
+}
+
+Bezier::~Bezier()
+{
 }
 
 double Bezier::fact(int _i)
