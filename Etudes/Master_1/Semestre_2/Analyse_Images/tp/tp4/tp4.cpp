@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GL/glut.h>
-#include <cmath>
+#include <math.h>
 
 #define PI 3.14159265
 #define MAX 100
@@ -58,23 +58,26 @@ void Translation3D(Point3D &p, float x, float y, float z)
 
 void RotationX(Point3D &p, float angle)
 {
-	p.x = p.x;
-	p.y = p.y*cos(angle*PI/180) - (p.z*sin(angle*PI/180));
-	p.z = p.y*sin(angle*PI/180) + p.z*cos(angle*PI/180);
+	Point3D tmp = p;
+	p.x = tmp.x;
+	p.y = tmp.y*cos(angle*PI/180) - (tmp.z*sin(angle*PI/180));
+	p.z = tmp.y*sin(angle*PI/180) + tmp.z*cos(angle*PI/180);
 }
 
 void RotationY(Point3D &p, float angle)
 {
-	p.x = p.x*cos(angle*PI/180) + p.z*sin(angle*PI/180);
-	p.y = p.y;
-	p.z = (-p.x*sin(angle*PI/180)) + p.z*cos(angle*PI/180);
+	Point3D tmp = p;
+	p.x = tmp.x*cos(angle*PI/180) + tmp.z*sin(angle*PI/180);
+	p.y = tmp.y;
+	p.z = (-tmp.x*sin(angle*PI/180)) + tmp.z*cos(angle*PI/180);
 }
 
 void RotationZ(Point3D &p, float angle)
 {
-	p.x = p.x*cos(angle*PI/180) - (p.y*sin(angle*PI/180));
-	p.y = p.x*sin(angle*PI/180) + p.y*cos(angle*PI/180);
-	p.z = p.z;
+	Point3D tmp = p;
+	p.x = tmp.x*cos(angle*PI/180) - (tmp.y*sin(angle*PI/180));
+	p.y = tmp.x*sin(angle*PI/180) + tmp.y*cos(angle*PI/180);
+	p.z = tmp.z;
 }
 
 void drawTriangle(void)
@@ -131,9 +134,7 @@ void drawTriangle(void)
 		glColor3f(0.0, 0.0, 0.0);
 		glVertex2f(pb.x, pb.y);
 	glEnd();*/
-	printf("angleX: %f\n", angleX);
-	printf("angleY: %f\n", angleY);
-	printf("angleZ: %f\n", angleZ);
+	printf("angleX: %f, angleY: %f, angleZ: %f\n", angleX, angleY, angleZ);
 }
 
 void drawPoints(void)
