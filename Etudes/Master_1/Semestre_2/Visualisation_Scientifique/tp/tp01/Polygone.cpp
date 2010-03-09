@@ -2,23 +2,27 @@
 
 Polygone::Polygone(void)
 {
-	PointInsertion = -1;
+	initialisation();
 }
 
 Polygone::~Polygone(void)
 {
 }
 
+void Polygone::initialisation(void)
+{
+	PointInsertion = -1;
+	bCreationPolygone = 1;
+	bEnMouvement = 0;
+}
+
 void Polygone::ajouterSommet(int _x, int _y)
 {
-	//Point2D(_x, _y);
-	
 	std::vector<Point2D>::iterator it;
 	it = PTS.begin();
 
 	PointInsertion++;
 	PTS.insert(it+PointInsertion, Point2D(_x, _y));
-	//printf("Nombre de points : %d\n", PTS.size());
 }
 
 int Polygone::trouverSommet(int _x, int _y)
@@ -119,6 +123,30 @@ bool Polygone::estInterieur(int _x, int _y)
 	return (nbIntersect%2 != 0) ? true : false;
 }
 
+void Polygone::deplacer(int _x, int _y)
+{
+	for (int i = 0; i < PTS.size(); i++)
+	{
+		PTS.at(i).x += _x;
+		PTS.at(i).y += _y;
+	}
+	/*for (int i=0; i<TROUS.size(); i++)
+	{
+		for (int j=0; j<TROUS.at(i).size(); j++)
+		{
+			TROUS.at(i).at(j).x += _x;
+			TROUS.at(i).at(j).y += _y;
+		}
+	}*/
+}
+
+void Polygone::vider(void)
+{
+	PTS.clear();
+	TROUS.clear();
+	initialisation();
+}
+
 void Polygone::tracerSommets(void)
 {
 	for (int i = 0; i < (int)PTS.size(); i++)
@@ -126,7 +154,6 @@ void Polygone::tracerSommets(void)
 		if (PointInsertion == i)
 			glColor3f(1.0, 1.0, 0.0);
 		else glColor3f(1.0, 0.0, 0.0);
-		glPointSize(5);
 		glBegin(GL_POINTS);
 			glVertex2i(PTS.at(i).x, PTS.at(i).y);
 		glEnd();
@@ -135,7 +162,6 @@ void Polygone::tracerSommets(void)
 
 void Polygone::tracerAretes(int _modeAffichage)
 {
-	glColor3f(0.0, 0.0, 1.0);
 	if (PTS.size() > 1)
 	{
 		glBegin(_modeAffichage);

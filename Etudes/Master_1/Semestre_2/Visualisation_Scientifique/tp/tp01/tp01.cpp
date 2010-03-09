@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <iostream>
 #include <vector>
 #include <math.h>
 #include <GL/glut.h>
@@ -14,66 +15,35 @@ typedef unsigned int uint;
 #define wHeight 600
 
 #define PI 3.14159265
-#define NB_PTS_MAX 100
 
-typedef struct 
-{
-	int x;
-	int y;
-} Point;
-
-Polygone poly;
 
 int f1, f2, f3;
+int lastX, lastY;
+int indPoly = -1;
+
+vector<Polygone> lPoly;
+Polygone poly;
 
 int ModeAffichage = GL_LINE_LOOP;
-
-int ModeFonctionnement = 0;
-
-bool ModeCreationPolygon = 1;
 bool AffichageCoords = 0;
-bool CreationPoint = 0;
+bool bModeCreation = 1;
+bool bModeTrous = 0;
 
-//vector<Point> PTS;
-vector<vector<Point> > TROUS;
-
-//int PtInsertion = -1;
-int NbPolygons = 0;
-
-void AfficherTexte(float x, float y, float z, void* font, const char* s)
-{
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_DEPTH_TEST);
-	glRasterPos2f(x, y);
-	while(*s)
-	{
-		glutBitmapCharacter(font, *s);
-		s++;
-	}
-}
-
-/*void AfficherCoordonnees(void)
-{
-	if (!PTS.empty())
-	{
-		for (int i = 0; i < (int)PTS.size(); i++)
-		{
-			glColor3f(0.0, 0.0, 0.0);
-			char coords[30] = "";
-			sprintf(coords,"[x: %d ; y: %d]", PTS[i].x,PTS[i].y);
-			AfficherTexte(PTS[i].x, wHeight - PTS[i].y+10, 0.0, GLUT_BITMAP_TIMES_ROMAN_10, coords);
-		}
-	}
-}*/
 
 void affichage (void)
 {
-	glClearColor(1.0, 1.0, 1.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT);
+	glColor3f(0.0, 1.0, 1.0);
 	poly.tracerAretes(ModeAffichage);
 	poly.tracerSommets();
+	for (int i = 0; i < lPoly.size(); i++)
+	{
+		glColor3f(0.0, 0.0, 1.0);
+		lPoly.at(i).tracerAretes(ModeAffichage);
+		lPoly.at(i).tracerSommets();
+	}
 	//if (AffichageCoords) AfficherCoordonnees();
-	glFlush();
+	glutSwapBuffers();
 }
 
 void redim (int width, int height)
@@ -111,13 +81,33 @@ void clavier (unsigned char key, int x, int y)
 		break;
 		
 		case 'e':
-			poly.PTS.clear();
-			poly.PointInsertion = -1;
+			lPoly.clear();
+			poly.vider();
+			bModeCreation = 1;
+		break;
+		
+		case 'm':
+			bModeCreation = !bModeCreation;
+			if (bModeCreation)
+			{
+				printf(">> MODE CREATION <<\n");
+			}
+			else printf(">> MODE DEPLACEMENT <<\n");
 		break;
 		
 		case 'p':
-			ModeCreationPolygon = !ModeCreationPolygon;
-			//NbPolygons++;
+			if (poly.PTS.size() > 2)
+			{
+				poly.bCreationPolygone = 0;
+				lPoly.push_back(poly);
+				poly.vider();
+				cout<<"Polygone terminé"<<endl;
+				cout<<"Nombre de polygons : "<<lPoly.size()<<endl;
+			}
+		break;
+		
+		case 't':
+			
 		break;
 
 		case 'c':
@@ -136,41 +126,74 @@ void souris (int button, int state, int x, int y)
 		case GLUT_LEFT_BUTTON:
 			if (state == GLUT_DOWN) 
 			{
-				if (ModeCreationPolygon)
+				if (bModeCreation)
 				{
-					if (!CreationPoint)
-					{
-						if (NbPolygons == 0) NbPolygons++;
-						CreationPoint = 1;
-						poly.ajouterSommet(x, y);
-					}
+					poly.ajouterSommet(x, y);
 				}
-				else 
+				else
 				{
-					if (poly.estInterieur(x, y)) printf("ON EST DEDANS MINOOOOOOT\n");
-					else printf("ET NOOOOOOON DEHORS MINOOOOOT\n");
+					cout<<"---------------------"<<endl;
+					for (int i = 0; i < lPoly.size(); i++)
+					{
+						if (lPoly.at(i).estInterieur(x, y))
+						{
+							printf("ON EST DEDANS MINOOOT :B\n");
+							lPoly.at(i).bEnMouvement = 1;
+						}
+						else printf("ON EST DEHORS :B\n");
+					}
+					cout<<"---------------------"<<endl;
+					lastX = x;
+					lastY = y;
 				}
 			}
 			if (state == GLUT_UP)
 			{
-				if (CreationPoint) CreationPoint = 0;
+				for (int i = 0; i < lPoly.size(); i++)
+				{
+					lPoly.at(i).bEnMouvement = 0;
+				}
 			}
 		break;
 
 		case GLUT_MIDDLE_BUTTON:
 			if (state == GLUT_DOWN)
 			{
-				poly.changerPointInsertion(x, y);
 			}
 		break;
 
 		case GLUT_RIGHT_BUTTON:
 			if (state == GLUT_DOWN)
 			{
-				poly.supprimerSommet(x, y);
 			}
 		break;
 	}
+	glutPostRedisplay();
+}
+
+
+void motionGL(int _x, int _y)
+{
+	for (int i = 0; i < lPoly.size(); i++)
+	{
+		if (!bModeCreation && lPoly.at(i).bEnMouvement && lPoly.at(i).estInterieur(_x, wHeight-_y))
+		{
+			int vx, vy;
+			vx = _x - lastX;
+			vy = wHeight -_y - lastY;
+			lPoly.at(i).deplacer(vx, vy);
+		}
+	}
+    lastX = _x;
+	lastY = wHeight-_y;
+	
+	glutPostRedisplay();
+}
+
+
+void passiveMotionGL(int _x, int _y)
+{
+  
 	glutPostRedisplay();
 }
 
@@ -181,12 +204,17 @@ int main (int argc, char **argv)
 	/*** Fenetre 1 ***/
 	glutInitWindowSize(wWidth, wHeight);
 	glutInitWindowPosition(200, 100);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
+	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 	f1 = glutCreateWindow("[TP1] Visualisation Scientifique - Un point dans un polygone");
 	glutDisplayFunc(affichage);
 	glutReshapeFunc(redim);
 	glutKeyboardFunc(clavier);
 	glutMouseFunc(souris);
+	glutMotionFunc(motionGL);
+	glutPassiveMotionFunc(passiveMotionGL);
+	
+	glClearColor(0.8, 0.8, 0.8, 1.0);
+	glPointSize(5);
 	
 	glutMainLoop();
 
