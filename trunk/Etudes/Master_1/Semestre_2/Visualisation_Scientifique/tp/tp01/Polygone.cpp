@@ -125,10 +125,18 @@ bool Polygone::estInterieur(int _x, int _y)
 
 void Polygone::deplacer(int _x, int _y)
 {
-	for (int i = 0; i < PTS.size(); i++)
+	for (int i = 0; i < (int)PTS.size(); i++)
 	{
 		PTS.at(i).x += _x;
 		PTS.at(i).y += _y;
+	}
+
+	for (int i = 0; i < (int)TROUS.size(); i++)
+	{
+		for(int j = 0; j < (int)TROUS.at(i).PTS.size(); j++){
+			TROUS.at(i).PTS.at(j).x += _x;
+			TROUS.at(i).PTS.at(j).y += _y;
+		}
 	}
 	/*for (int i=0; i<TROUS.size(); i++)
 	{
@@ -171,5 +179,16 @@ void Polygone::tracerAretes(int _modeAffichage)
 			glVertex2i(PTS.at(i+1).x,  PTS.at(i+1).y);
 		}
 		glEnd();
+	}
+}
+
+void Polygone::tracerTrous(int _modeAffichage)
+{
+	for (int i = 0; i < (int)TROUS.size(); i++)
+	{
+		glColor3f(0.0, 1.0, 0.0);
+		TROUS.at(i).tracerAretes(_modeAffichage);
+		glColor3f(0.0, 0.0, 1.0);
+		TROUS.at(i).tracerSommets();
 	}
 }

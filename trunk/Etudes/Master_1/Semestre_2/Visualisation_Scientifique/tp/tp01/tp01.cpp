@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+//#include "glut.h"
 #include <GL/glut.h>
 
 #include "Polygone.h"
@@ -25,9 +26,11 @@ vector<Polygone> lPoly;
 Polygone poly;
 
 int ModeAffichage = GL_LINE_LOOP;
+int indiceTrou = -1;
 bool AffichageCoords = 0;
 bool bModeCreation = 1;
-bool bModeTrous = 0;
+bool bModeTrous = false;
+bool selectionPoly = false;
 
 
 void affichage (void)
@@ -36,11 +39,12 @@ void affichage (void)
 	glColor3f(0.0, 1.0, 1.0);
 	poly.tracerAretes(ModeAffichage);
 	poly.tracerSommets();
-	for (int i = 0; i < lPoly.size(); i++)
+	for (int i = 0; i < (int)lPoly.size(); i++)
 	{
 		glColor3f(0.0, 0.0, 1.0);
 		lPoly.at(i).tracerAretes(ModeAffichage);
 		lPoly.at(i).tracerSommets();
+		lPoly.at(i).tracerTrous(ModeAffichage);
 	}
 	//if (AffichageCoords) AfficherCoordonnees();
 	glutSwapBuffers();
@@ -84,6 +88,9 @@ void clavier (unsigned char key, int x, int y)
 			lPoly.clear();
 			poly.vider();
 			bModeCreation = 1;
+			bModeTrous = false;
+			selectionPoly = false;
+			indiceTrou = -1;
 		break;
 		
 		case 'm':
@@ -95,8 +102,8 @@ void clavier (unsigned char key, int x, int y)
 			else printf(">> MODE DEPLACEMENT <<\n");
 		break;
 		
-		case 'p':
-			if (poly.PTS.size() > 2)
+		case 'a':
+			if (poly.PTS.size() > 2 && bModeTrous == false)
 			{
 				poly.bCreationPolygone = 0;
 				lPoly.push_back(poly);
@@ -104,10 +111,25 @@ void clavier (unsigned char key, int x, int y)
 				cout<<"Polygone terminé"<<endl;
 				cout<<"Nombre de polygons : "<<lPoly.size()<<endl;
 			}
+			else if (poly.PTS.size() > 2 && bModeTrous == true && indiceTrou >= 0){
+				poly.bCreationPolygone = 0;
+				lPoly.at(indiceTrou).TROUS.push_back(poly);//insere le trou dans le polygone adequat
+				poly.vider();
+			}
+			selectionPoly = false;
 		break;
 		
-		case 't':
-			
+		case 'p':// On passe en mode dessin de polygones
+			bModeTrous = false; 
+			indiceTrou = -1;
+			bModeCreation = 1;
+			selectionPoly = false;
+		break;
+
+		case 't':// On passe en mode dessin de trous
+			bModeCreation = 1;
+			bModeTrous = true;	
+			selectionPoly = false;
 		break;
 
 		case 'c':
@@ -120,7 +142,9 @@ void clavier (unsigned char key, int x, int y)
 
 void souris (int button, int state, int x, int y)
 {
+	int cptNbPoly = 0;
 	y = wHeight - y;
+	
 	switch(button)
 	{
 		case GLUT_LEFT_BUTTON:
@@ -128,28 +152,63 @@ void souris (int button, int state, int x, int y)
 			{
 				if (bModeCreation)
 				{
-					poly.ajouterSommet(x, y);
+					cout<<"Indice trou = " << indiceTrou << endl;
+					if (bModeTrous) cout<<"Dessin de trous active!" <<endl;
+					if(bModeTrous == false){	//si on trace un polygone
+						poly.ajouterSommet(x, y);
+						
+
+					}
+					if (selectionPoly == false && bModeTrous == true){
+						for (int i = 0; i < (int)lPoly.size(); i++)
+						{
+							if (lPoly.at(i).estInterieur(x, y))
+							{
+								indiceTrou = i;
+								cptNbPoly++;
+							}
+						}
+						if(cptNbPoly > 1){
+							cout<<"Veuillez ne selectionner qu'un seul polygone! (Non mais sans deconner quoi...)"<<endl;
+							indiceTrou = -1;
+						}
+						
+						
+					}
+
+					if(indiceTrou >= 0 && cptNbPoly > 0 || selectionPoly){
+						selectionPoly = true;
+						if (lPoly.at(indiceTrou).estInterieur(x, y)){
+							bool dansTrou = false;
+							for(int i = 0; i < (int)lPoly.at(indiceTrou).TROUS.size(); i++)
+								if (lPoly.at(indiceTrou).TROUS.at(i).estInterieur(x, y))
+									dansTrou = true;
+							if(!dansTrou)
+								poly.ajouterSommet(x, y);
+						}
+						printf("Polygone Selectionneavec succes, le trace du trou a commence!");
+					}
 				}
 				else
 				{
-					cout<<"---------------------"<<endl;
-					for (int i = 0; i < lPoly.size(); i++)
-					{
-						if (lPoly.at(i).estInterieur(x, y))
+						cout<<"---------------------"<<endl;
+						for (int i = 0; i < (int)lPoly.size(); i++)
 						{
-							printf("ON EST DEDANS MINOOOT :B\n");
-							lPoly.at(i).bEnMouvement = 1;
+							if (lPoly.at(i).estInterieur(x, y))
+							{
+								printf("ON EST DEDANS MINOOOT :B\n");
+								lPoly.at(i).bEnMouvement = 1;
+							}
+							else printf("ON EST DEHORS :B\n");
 						}
-						else printf("ON EST DEHORS :B\n");
-					}
-					cout<<"---------------------"<<endl;
-					lastX = x;
-					lastY = y;
+						cout<<"---------------------"<<endl;
+						lastX = x;
+						lastY = y;
 				}
-			}
+				}
 			if (state == GLUT_UP)
 			{
-				for (int i = 0; i < lPoly.size(); i++)
+				for (int i = 0; i < (int)lPoly.size(); i++)
 				{
 					lPoly.at(i).bEnMouvement = 0;
 				}
@@ -174,9 +233,18 @@ void souris (int button, int state, int x, int y)
 
 void motionGL(int _x, int _y)
 {
-	for (int i = 0; i < lPoly.size(); i++)
+	int indicePolyTrou = -1;
+	for (int i = 0; i < (int)lPoly.size(); i++)
 	{
-		if (!bModeCreation && lPoly.at(i).bEnMouvement && lPoly.at(i).estInterieur(_x, wHeight-_y))
+		for(int j = 0; j < (int)lPoly.at(i).TROUS.size(); j++){
+			if(lPoly.at(i).TROUS.at(j).estInterieur(_x, wHeight-_y))
+				indicePolyTrou = i;
+		}
+	}
+
+	for (int i = 0; i < (int)lPoly.size(); i++)
+	{
+		if (!bModeCreation && lPoly.at(i).bEnMouvement && lPoly.at(i).estInterieur(_x, wHeight-_y) && i !=indicePolyTrou)
 		{
 			int vx, vy;
 			vx = _x - lastX;
@@ -193,7 +261,6 @@ void motionGL(int _x, int _y)
 
 void passiveMotionGL(int _x, int _y)
 {
-  
 	glutPostRedisplay();
 }
 

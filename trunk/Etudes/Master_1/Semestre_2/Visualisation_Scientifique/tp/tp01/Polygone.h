@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <math.h>
+//#include "glut.h"
 #include <GL/glut.h>
 #include "Point2D.h"
 
@@ -34,5 +35,6 @@ public:
 	// Méthodes de rendu
 	void tracerSommets(void);
 	void tracerAretes(int _modeAffichage);
+	void tracerTrous(int _modeAffichage);
 };
 #endif
