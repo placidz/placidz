@@ -21,9 +21,13 @@ typedef unsigned int uint;
 int f1, f2, f3;
 int lastX, lastY;
 int indPoly = -1;
+int indiceSegment = -1;
 
 vector<Polygone> lPoly;
+vector<int> suiteIndice;
 Polygone poly;
+
+vector<Point2D> ptsInter = vector<Point2D>();
 
 int ModeAffichage = GL_LINE_LOOP;
 int indiceTrou = -1;
@@ -32,6 +36,39 @@ bool bModeCreation = 1;
 bool bModeTrous = false;
 bool selectionPoly = false;
 bool verrouDplt = true;
+
+
+void AfficherTexte(float x, float y, float z, void* font, const char* s)
+{
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glRasterPos2f(x, y);
+	while(*s)
+	{
+		glutBitmapCharacter(font, *s);
+		s++;
+	}
+}
+
+void AfficherCoordonnees(void)
+{
+	if (!lPoly.empty())
+	{
+		for (int i = 0; i < (int)lPoly.size(); i++)
+		{
+			if (!lPoly.at(i).PTS.empty())
+			{
+				for (int j = 0; j < (int)lPoly.at(i).PTS.size(); j++)
+				{
+					glColor3f(0.0, 0.0, 0.0);
+					char coords[30] = "";
+					sprintf(coords,"[x: %d ; y: %d]", lPoly.at(i).PTS.at(j).x, lPoly.at(i).PTS.at(j).y);
+					AfficherTexte(lPoly.at(i).PTS.at(j).x, lPoly.at(i).PTS.at(j).y+10, 0.0, GLUT_BITMAP_TIMES_ROMAN_10, coords);
+				}
+			}
+		}
+	}
+}
 
 
 void affichage (void)
@@ -47,7 +84,14 @@ void affichage (void)
 		lPoly.at(i).tracerSommets();
 		lPoly.at(i).tracerTrous(ModeAffichage);
 	}
-	//if (AffichageCoords) AfficherCoordonnees();
+	for (int i = 0; i < (int)ptsInter.size(); i++)
+	{
+		glColor3f(1.0, 0.0, 1.0);
+		glBegin(GL_POINTS);
+			glVertex2i(ptsInter.at(i).x, ptsInter.at(i).y);
+		glEnd();
+	}
+	if (AffichageCoords) AfficherCoordonnees();
 	glutSwapBuffers();
 }
 
@@ -112,8 +156,7 @@ void clavier (unsigned char key, int x, int y)
 				cout<<"Polygone terminé"<<endl;
 				cout<<"Nombre de polygons : "<<lPoly.size()<<endl;
 			}
-			else if (poly.PTS.size() > 2 && bModeTrous == true && indiceTrou >= 0)
-			{
+			else if (poly.PTS.size() > 2 && bModeTrous == true && indiceTrou >= 0){
 				poly.bCreationPolygone = 0;
 				lPoly.at(indiceTrou).TROUS.push_back(poly);//insere le trou dans le polygone adequat
 				poly.vider();
@@ -129,7 +172,6 @@ void clavier (unsigned char key, int x, int y)
 		break;
 
 		case 't':// On passe en mode dessin de trous
-			bModeCreation = 1;
 			bModeTrous = true;	
 			selectionPoly = false;
 		break;
@@ -137,6 +179,11 @@ void clavier (unsigned char key, int x, int y)
 		case 'c':
 			// Afficher les coordonnees des points
 			AffichageCoords = !AffichageCoords;
+		break;
+
+		case 'i':
+			ptsInter = lPoly.at(0).intersection(lPoly.at(1));
+			
 		break;
 	}
 	glutPostRedisplay();	
@@ -152,7 +199,7 @@ void souris (int button, int state, int x, int y)
 		case GLUT_LEFT_BUTTON:
 			if (state == GLUT_DOWN) 
 			{
-				if (bModeCreation) // ***** MODE CREATION *****
+				if (bModeCreation)
 				{
 					cout<<"Indice trou = " << indiceTrou << endl;
 					if (bModeTrous) cout<<"Dessin de trous active!" <<endl;
@@ -180,8 +227,7 @@ void souris (int button, int state, int x, int y)
 
 					if(indiceTrou >= 0 && cptNbPoly > 0 || selectionPoly){
 						selectionPoly = true;
-						if (lPoly.at(indiceTrou).estInterieur(x, y))
-						{
+						if (lPoly.at(indiceTrou).estInterieur(x, y)){
 							bool dansTrou = false;
 							for(int i = 0; i < (int)lPoly.at(indiceTrou).TROUS.size(); i++)
 								if (lPoly.at(indiceTrou).TROUS.at(i).estInterieur(x, y))
@@ -192,20 +238,18 @@ void souris (int button, int state, int x, int y)
 						printf("Polygone Selectionneavec succes, le trace du trou a commence!");
 					}
 				}
-				else // ***** MODE DEPLACEMENT *****
+				else
 				{
 						cout<<"---------------------"<<endl;
 						for (int i = 0; i < (int)lPoly.size(); i++)
 						{
 							if (lPoly.at(i).estInterieur(x, y) && verrouDplt == true)
 							{
-								verrouDplt = false;				
+								verrouDplt = false;
 								printf("ON EST DEDANS MINOOOT :B\n");
 								lPoly.at(i).bEnMouvement = 1;
 							}
-							else{ 
-								printf("ON EST DEHORS :B\n");
-							}
+							else printf("ON EST DEHORS :B\n");
 						}
 						cout<<"---------------------"<<endl;
 						lastX = x;
@@ -217,8 +261,8 @@ void souris (int button, int state, int x, int y)
 				for (int i = 0; i < (int)lPoly.size(); i++)
 				{
 					lPoly.at(i).bEnMouvement = 0;
+					verrouDplt = true;
 				}
-				verrouDplt = true;
 			}
 		break;
 
