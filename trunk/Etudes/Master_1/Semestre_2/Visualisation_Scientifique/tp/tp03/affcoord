@@ -1,0 +1,25 @@
+void AfficherTexte(float x, float y, float z, void* font, const char* s)
+{
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_DEPTH_TEST);
+	glRasterPos2f(x, y);
+	while(*s)
+	{
+		glutBitmapCharacter(font, *s);
+		s++;
+	}
+}
+
+/*void AfficherCoordonnees(void)
+{
+	if (!PTS.empty())
+	{
+		for (int i = 0; i < (int)PTS.size(); i++)
+		{
+			glColor3f(0.0, 0.0, 0.0);
+			char coords[30] = "";
+			sprintf(coords,"[x: %d ; y: %d]", PTS[i].x,PTS[i].y);
+			AfficherTexte(PTS[i].x, wHeight - PTS[i].y+10, 0.0, GLUT_BITMAP_TIMES_ROMAN_10, coords);
+		}
+	}
+}*/
