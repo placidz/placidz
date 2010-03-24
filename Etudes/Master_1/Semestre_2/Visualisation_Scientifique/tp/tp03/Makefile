@@ -1,5 +1,5 @@
 CPP=g++
-CPPFLAGS=-O3 
+CPPFLAGS=-O3 -ggdb3
 
 all : tp03
 

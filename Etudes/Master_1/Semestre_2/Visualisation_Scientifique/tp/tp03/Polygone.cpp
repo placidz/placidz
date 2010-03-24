@@ -146,18 +146,11 @@ void Polygone::deplacer(int _x, int _y)
 			TROUS.at(i).PTS.at(j).y += _y;
 		}
 	}
-	/*for (int i=0; i<TROUS.size(); i++)
-	{
-		for (int j=0; j<TROUS.at(i).size(); j++)
-		{
-			TROUS.at(i).at(j).x += _x;
-			TROUS.at(i).at(j).y += _y;
-		}
-	}*/
 }
 
-void Polygone::colorer(float r, float g, float b)
+void Polygone::colorer(float _r, float _g, float _b)
 {
+	printf("************************* Fonction COLORER ******************************\n");
 	// S : tableau de sommets
 	// ns : nombre de sommets
 	int ns = PTS.size();
@@ -169,50 +162,64 @@ void Polygone::colorer(float r, float g, float b)
 	}
 	
 	// Y : tableau des ordonnées avec l'indice de sommet correspondant
+	
 	int Y[2][ns];
 	for (int i=0; i < ns; i++)
 	{
 		Y[0][i] = i;
 		Y[1][i] = PTS[i].y;
 	}
-	/*for (int i=0; i<ns; i++)
+	
+	printf("Remplissage de Y\n");
+	for (int i=0; i<ns; i++)
 		printf("ind: %d - Y: %d\n", Y[0][i], Y[1][i]);
-	printf("-------------");*/
+	printf("\n-------------\n");
+	
 	
 	// Tri de Y dans l'ordre décroissant
+	
 	bool en_desordre = true;
 	for (int i = 0; i < ns && en_desordre; ++i)
 	{
 		en_desordre = false;
 		for (int j = 1; j < ns - i; ++j)
-			if (Y[1][j-1] > Y[1][j])
+			if (Y[1][j-1] < Y[1][j])
 			{
 				std::swap(Y[0][j], Y[0][j-1]);
-				std::swap(Y[1][j], Y[0][j-1]);
+				std::swap(Y[1][j], Y[1][j-1]);
 				en_desordre = true;
  			}
 	}
-	/*for (int i=0; i<ns; i++)
-		printf("ind: %d - Y: %d\n", Y[0][i], Y[1][i]);*/
+	
+	printf("Tri de Y\n");
+	for (int i=0; i<ns; i++)
+		printf("ind: %d - Y: %d\n", Y[0][i], Y[1][i]);
+	printf("\n-------------\n");
 	
 	// bo : liste d'ordonnées
 	vector<int> bo;
 	
 	// On épure la liste des ordonnées afin de virer les doublons
-	int last, curr;
-	last = Y[1][0];
+	int prev, curr;
+	prev = Y[1][0];
 	for (int i=1; i<ns; i++)
 	{
 		curr = Y[1][i];
-		if (last != curr) bo.push_back(last);
-		last = curr;
+		if (prev != curr)
+		{
+			bo.push_back(prev);
+		}
+		prev = curr;
 	}
+	bo.push_back(prev);
 	
-	/*for (int i=0; i<bo.size(); i++)
-		printf("%d\n", bo[i]);*/
+	printf("Epurer bornes\n");
+	for (int i=0; i<bo.size(); i++)
+		printf("%d\n", bo[i]);
+	printf("\n-------------\n");
 		
 	// bornes : tableau des bornes de niveaux
-	int nbniv = bo.size();;
+	int nbniv = bo.size();
 	int bornes[nbniv];
 	for (int i=0; i<nbniv; i++)
 		bornes[i] = bo[i];
@@ -224,80 +231,73 @@ void Polygone::colorer(float r, float g, float b)
 	int naa = 0;
 	
 	// AAX : tableau de naa éléments contenant les arêtes coupées avec l'abscisse correspondante
-	int AAX[2][ns];
+	//int AAX[2][ns];
 	
-	// Pour chaque borne ...
+	// Pour chaque niveau ...
 	for (int ni=0; ni<nbniv-1; ni++)
 	{
 		// ... on regarde toutes les arêtes ...
+		int bornesup = bornes[ni];
+		int borneinf = bornes[ni+1];
+		
+		printf("Borne sup : %d - Borne inf : %d \n", bornesup, borneinf);
+		
+		// ... on réinitialise les arêtes actives à faux ...
+		for (int i=0; i<ns; i++) AA[i] = 0;
 		naa = 0;
+		
 		for (int i=0; i<ns; i++)
 		{
-			// ... et on active/désactive les arêtes concernées.
-			if (bornes[ni] >= Y[1][i] && Y[1][i] >= bornes[ni+1])
+			// ... et on active les arêtes concernées.
+			if (bornesup >= Y[1][i] && Y[1][i] >= borneinf)
 			{
 				AA[Y[0][i]] = 1;
-				//AAX[0][naa] = i;
 				naa++;
 			}
-			else
-			{
-				AA[Y[0][i]] = 0;
-				//naa--;
-			}
 		}
-		int bnaa = 0;
-		
-		// Pour chaque valeur de l entre 2 bornes ...
-		for (int l=bornes[ni]; l >= bornes[ni+1]; l--)
+		int AAX[naa];
+		int inaa = 0;
+		for (int l=bornesup; l>=borneinf; l--)
 		{
-			bnaa = 0;
+			inaa = 0;
 			for (int i=0; i<ns; i++)
 			{
 				if (AA[i])
 				{
+					Point2D I;
+					Point2D dg(INT_MIN, l);
+					Point2D dd(INT_MAX, l);
 					Point2D pa, pb;
-					Point2D bg(INT_MIN, l);
-					Point2D bd(INT_MAX, l);
 					if (i < ns-1)
 					{
-						pa.x = S[0][i];
-						pa.y = S[1][i];
-						pb.x = S[0][i+1];
-						pb.y = S[1][i+1];
+						pa.Set(S[0][i], S[1][i]);
+						pb.Set(S[0][i+1], S[1][i+1]);
 					}
 					else if (i == ns-1)
 					{
-						pa.x = S[0][i];
-						pa.y = S[1][i];
-						pb.x = S[0][0];
-						pb.y = S[1][0];
+						pa.Set(S[0][i], S[1][i]);
+						pb.Set(S[0][0], S[1][0]);
 					}
-					Point2D I = computeIntersection(pa, pb, bg, bd);
-					AAX[1][bnaa] = I.x;
-					bnaa++;
+					/*if (pa.y == l) I.x = pa.x;
+					if (pb.y == l) I.x = pb.x;
+					else */I = computeIntersection(pa, pb, dg, dd);
+					AAX[inaa] = I.x;
+					inaa++;
 				}
 			}
-			bool en_desordre = true;
-			for (int i = 0; i < bnaa && en_desordre; ++i)
+			sortByAscOrder(AAX, naa);
+			for (int i=0; i<=naa-2; i+=2)
 			{
-				en_desordre = false;
-				for (int j = 1; j < bnaa - i; ++j)
-					if (AAX[1][j-1] > AAX[1][j])
-					{
-						std::swap(AAX[0][j], AAX[0][j-1]);
-						std::swap(AAX[1][j], AAX[0][j-1]);
-						en_desordre = true;
-					}
-			}
-			for (int i=0; i<bnaa-1; i++)
-			{
-				glColor3f(r, g, b);
+				glColor3f(_r, _g, _b);
 				glBegin(GL_LINES);
-					glVertex2i(AAX[1][i], l);
-					glVertex2i(AAX[1][i+1], l);
+					glVertex2i(AAX[i], l);
+					printf("x: AAX[%d]: %d  - y: %d\n", i, AAX[i], l);
+					glVertex2i(AAX[i+1], l);
+					printf("x: AAX[%d]: %d  - y: %d\n", i+1, AAX[i+1], l);
 				glEnd();
+				printf("----\n");
 			}
+			printf("-------------------\n");
 		}
 	}
 }
@@ -311,6 +311,7 @@ void Polygone::vider(void)
 
 void Polygone::tracerSommets(void)
 {
+	glPointSize(5.0);
 	for (int i = 0; i < (int)PTS.size(); i++)
 	{
 		if (PointInsertion == i)
@@ -320,10 +321,12 @@ void Polygone::tracerSommets(void)
 			glVertex2i(PTS.at(i).x, PTS.at(i).y);
 		glEnd();
 	}
+	glPointSize(1.0);
 }
 
 void Polygone::tracerAretes(int _modeAffichage)
 {
+	glLineWidth(2.0);
 	if (PTS.size() > 1)
 	{
 		glBegin(_modeAffichage);
@@ -334,6 +337,7 @@ void Polygone::tracerAretes(int _modeAffichage)
 		}
 		glEnd();
 	}
+	glLineWidth(1.0);
 }
 
 void Polygone::tracerTrous(int _modeAffichage)
