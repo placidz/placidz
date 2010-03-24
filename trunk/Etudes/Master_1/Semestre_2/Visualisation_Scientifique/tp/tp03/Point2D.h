@@ -11,6 +11,8 @@ public:
 	Point2D(int _x, int _y);
 	~Point2D(void);
 	
+	void Set(int _x, int _y);
+	
 	Point2D& operator=(const Point2D&);
 };
 #endif

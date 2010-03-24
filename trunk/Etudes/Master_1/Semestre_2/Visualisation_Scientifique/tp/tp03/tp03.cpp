@@ -36,7 +36,7 @@ bool verrouDplt = true;
 void affichage (void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	if (!lPoly.empty() && lPoly[0].bColoration) lPoly[0].colorer(1.0, 1.0, 0.0);
+	if (!lPoly.empty() && lPoly[0].bColoration) lPoly[0].colorer(0.0, 1.0, 0.0);
 	glColor3f(0.0, 1.0, 1.0);
 	poly.tracerAretes(ModeAffichage);
 	poly.tracerSommets();
@@ -72,19 +72,19 @@ void clavier (unsigned char key, int x, int y)
 		case '1':
 			ModeAffichage = GL_POINTS;
 		break;
-		
+
 		case '2':
 			ModeAffichage = GL_LINES;
 		break;
-		
+
 		case '3':
 			ModeAffichage = GL_LINE_LOOP;
 		break;
-		
+
 		case '4':
 			ModeAffichage = GL_LINE_STRIP;
 		break;
-		
+
 		case 'e':
 			lPoly.clear();
 			poly.vider();
@@ -93,11 +93,11 @@ void clavier (unsigned char key, int x, int y)
 			selectionPoly = false;
 			indiceTrou = -1;
 		break;
-		
+
 		case 'r':
 			lPoly[0].bColoration = !lPoly[0].bColoration;
 		break;
-		
+
 		case 'm':
 			bModeCreation = !bModeCreation;
 			if (bModeCreation)
@@ -106,7 +106,7 @@ void clavier (unsigned char key, int x, int y)
 			}
 			else printf(">> MODE DEPLACEMENT <<\n");
 		break;
-		
+
 		case 'a':
 			if (poly.PTS.size() > 2 && bModeTrous == false)
 			{
@@ -124,9 +124,9 @@ void clavier (unsigned char key, int x, int y)
 			}
 			selectionPoly = false;
 		break;
-		
+
 		case 'p':// On passe en mode dessin de polygones
-			bModeTrous = false; 
+			bModeTrous = false;
 			indiceTrou = -1;
 			bModeCreation = 1;
 			selectionPoly = false;
@@ -134,7 +134,7 @@ void clavier (unsigned char key, int x, int y)
 
 		case 't':// On passe en mode dessin de trous
 			bModeCreation = 1;
-			bModeTrous = true;	
+			bModeTrous = true;
 			selectionPoly = false;
 		break;
 
@@ -143,26 +143,26 @@ void clavier (unsigned char key, int x, int y)
 			AffichageCoords = !AffichageCoords;
 		break;
 	}
-	glutPostRedisplay();	
+	glutPostRedisplay();
 }
 
 void souris (int button, int state, int x, int y)
 {
 	int cptNbPoly = 0;
 	y = wHeight - y;
-	
+
 	switch(button)
 	{
 		case GLUT_LEFT_BUTTON:
-			if (state == GLUT_DOWN) 
+			if (state == GLUT_DOWN)
 			{
 				if (bModeCreation) // ***** MODE CREATION *****
 				{
-					cout<<"Indice trou = " << indiceTrou << endl;
+					//cout<<"Indice trou = " << indiceTrou << endl;
 					if (bModeTrous) cout<<"Dessin de trous active!" <<endl;
 					if(bModeTrous == false){	//si on trace un polygone
 						poly.ajouterSommet(x, y);
-						
+
 
 					}
 					if (selectionPoly == false && bModeTrous == true){
@@ -178,8 +178,8 @@ void souris (int button, int state, int x, int y)
 							cout<<"Veuillez ne selectionner qu'un seul polygone! (Non mais sans deconner quoi...)"<<endl;
 							indiceTrou = -1;
 						}
-						
-						
+
+
 					}
 
 					if(indiceTrou >= 0 && cptNbPoly > 0 || selectionPoly){
@@ -203,11 +203,11 @@ void souris (int button, int state, int x, int y)
 						{
 							if (lPoly.at(i).estInterieur(x, y) && verrouDplt == true)
 							{
-								verrouDplt = false;				
+								verrouDplt = false;
 								printf("ON EST DEDANS MINOOOT :B\n");
 								lPoly.at(i).bEnMouvement = 1;
 							}
-							else{ 
+							else{
 								printf("ON EST DEHORS :B\n");
 							}
 						}
@@ -256,7 +256,7 @@ void motionGL(int _x, int _y)
 	}
     lastX = _x;
 	lastY = wHeight-_y;
-	
+
 	glutPostRedisplay();
 }
 
@@ -269,7 +269,7 @@ void passiveMotionGL(int _x, int _y)
 int main (int argc, char **argv)
 {
 	glutInit(&argc, argv);
-	
+
 	/*** Fenetre 1 ***/
 	glutInitWindowSize(wWidth, wHeight);
 	glutInitWindowPosition(200, 100);
@@ -281,10 +281,10 @@ int main (int argc, char **argv)
 	glutMouseFunc(souris);
 	glutMotionFunc(motionGL);
 	glutPassiveMotionFunc(passiveMotionGL);
-	
+
 	glClearColor(0.8, 0.8, 0.8, 1.0);
-	glPointSize(5);
-	
+	//glPointSize(5);
+
 	glutMainLoop();
 
 	return 0;
