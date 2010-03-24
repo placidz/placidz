@@ -162,7 +162,6 @@ void Polygone::colorer(float _r, float _g, float _b)
 	}
 	
 	// Y : tableau des ordonnées avec l'indice de sommet correspondant
-	
 	int Y[2][ns];
 	for (int i=0; i < ns; i++)
 	{
@@ -177,7 +176,6 @@ void Polygone::colorer(float _r, float _g, float _b)
 	
 	
 	// Tri de Y dans l'ordre décroissant
-	
 	bool en_desordre = true;
 	for (int i = 0; i < ns && en_desordre; ++i)
 	{
@@ -278,14 +276,21 @@ void Polygone::colorer(float _r, float _g, float _b)
 						pa.Set(S[0][i], S[1][i]);
 						pb.Set(S[0][0], S[1][0]);
 					}
-					/*if (pa.y == l) I.x = pa.x;
-					if (pb.y == l) I.x = pb.x;
-					else */I = computeIntersection(pa, pb, dg, dd);
+					//bool bPa =0, bPb = 0;
+					if (pa.y == l) I.x = pa.x;
+					else if (pb.y == l) I.x = pb.x;
+					else I = computeIntersection(pa, pb, dg, dd);
 					AAX[inaa] = I.x;
 					inaa++;
 				}
 			}
+			printf("Abscisses avant tri : \n");
+			for (int i=0; i<naa;i++) printf("x: %d ", AAX[i]);
+			printf("\n");
 			sortByAscOrder(AAX, naa);
+			printf("Abscisses après tri : \n");
+			for (int i=0; i<naa;i++) printf("x: %d ", AAX[i]);
+			printf("\n");
 			for (int i=0; i<=naa-2; i+=2)
 			{
 				glColor3f(_r, _g, _b);
