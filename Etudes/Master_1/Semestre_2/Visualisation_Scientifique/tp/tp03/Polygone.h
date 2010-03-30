@@ -22,39 +22,39 @@ typedef struct
 class Polygone
 {
 public:
-	std::vector<Point2D> PTS;
-	std::vector<Polygone> TROUS;
-	
-	int PointInsertion;
-	bool bCreationPolygone;
-	bool bEnMouvement;
-	bool bColoration;
+    std::vector<Point2D> PTS;
+    std::vector<Polygone> TROUS;
 
-	Polygone(void);
-	~Polygone(void);
-	
-	void initialisation(void);
-	void ajouterSommet(int _x, int _y);
-	int trouverSommet(int _x, int _y);
-	void changerPointInsertion(int _x, int _y);
-	void supprimerSommet(int _x, int _y);
+    int PointInsertion;
+    bool bCreationPolygone;
+    bool bEnMouvement;
+    bool bColoration;
 
-	Point2D getVertex(int _i);
-	Point2D getHoleVertex(int _nt, int _i);
-	int getIndexVertex(int _i);
-	int getIndexHoleVertex(int _nt, int _i);
+    Polygone(void);
+    ~Polygone(void);
 
-	bool estInterieur(int _x, int _y);
-	void deplacer(int _x, int _y);
-        void colorer(float _r, float _g, float _b, float _a);
-        void colorer(float _rgba[]);
-	
-	void vider(void);
+    void initialisation(void);
+    void ajouterSommet(int _x, int _y);
+    int trouverSommet(int _x, int _y);
+    void changerPointInsertion(int _x, int _y);
+    void supprimerSommet(int _x, int _y);
 
-	// Méthodes de rendu
-	void tracerSommets(void);
-	void tracerAretes(int _modeAffichage);
-	void tracerTrous(int _modeAffichage);
-	void afficherCoords(int _height);
+    Point2D getVertex(int _i);
+    Point2D getHoleVertex(int _nt, int _i);
+    int getIndexVertex(int _i);
+    int getIndexHoleVertex(int _nt, int _i);
+
+    bool estInterieur(int _x, int _y);
+    void deplacer(int _x, int _y);
+    void colorer(float _r, float _g, float _b, float _a);
+    void colorer(float _rgba[]);
+
+    void vider(void);
+
+    // Méthodes de rendu
+    void tracerSommets(void);
+    void tracerAretes(int _modeAffichage);
+    void tracerTrous(int _modeAffichage);
+    void afficherCoords(int _height);
 };
 #endif
