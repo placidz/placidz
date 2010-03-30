@@ -16,6 +16,8 @@ using namespace std;
 
 #define PI 3.14159265
 
+float bg_color[] = {0.8, 0.8, 0.8, 1.0};
+float poly_color[] = {0.5, 0.5, 0.5, 1.0};
 
 int f1, f2, f3;
 int lastX, lastY;
@@ -43,9 +45,9 @@ void affichage (void)
 	   {
 		  if (Coloration)
 		  {
-			 lPoly[i].colorer(0.5, 0.5, 0.5);
-			 /*for (int j=0; j<lPoly[i].TROUS.size(); j++)
-				lPoly[i].TROUS[j].colorer(0.8, 0.8, 0.8);*/
+                         lPoly[i].colorer(poly_color);
+                         for (int j=0; j<lPoly[i].TROUS.size(); j++)
+                                lPoly[i].TROUS[j].colorer(bg_color);
 		  }
 		  if (AffichageCoords)
 			 lPoly[i].afficherCoords(wHeight);
@@ -296,7 +298,7 @@ int main (int argc, char **argv)
     glutMotionFunc(motionGL);
     glutPassiveMotionFunc(passiveMotionGL);
 
-    glClearColor(0.8, 0.8, 0.8, 1.0);
+    glClearColor(bg_color[0], bg_color[1], bg_color[2], bg_color[3]);
     //glPointSize(5);
 
     glutMainLoop();

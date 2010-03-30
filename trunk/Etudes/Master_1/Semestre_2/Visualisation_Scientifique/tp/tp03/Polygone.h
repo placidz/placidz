@@ -46,7 +46,8 @@ public:
 
 	bool estInterieur(int _x, int _y);
 	void deplacer(int _x, int _y);
-	void colorer(float _r, float _g, float _b);
+        void colorer(float _r, float _g, float _b, float _a);
+        void colorer(float _rgba[]);
 	
 	void vider(void);
 
