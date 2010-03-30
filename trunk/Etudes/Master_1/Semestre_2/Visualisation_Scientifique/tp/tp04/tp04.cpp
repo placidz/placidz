@@ -4,6 +4,8 @@
 #include <vector>
 #include <math.h>
 //#include "glut.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include <GL/glut.h>
 
 #include "Point2D.h"
