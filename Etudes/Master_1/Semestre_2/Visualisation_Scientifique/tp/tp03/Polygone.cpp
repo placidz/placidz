@@ -174,7 +174,7 @@ void Polygone::deplacer(int _x, int _y)
     }
 }
 
-void Polygone::colorer(float _r, float _g, float _b)
+void Polygone::colorer(float _r, float _g, float _b, float _a)
 {
     printf("*************************************************************************\n");
     printf("************************* Fonction COLORER ******************************\n");
@@ -444,7 +444,7 @@ void Polygone::colorer(float _r, float _g, float _b)
 		  // ...et enfin on dessine la ligne de remplissage.
 		  for (int i=0; i<=naa-2; i+=2)
 		  {
-			 glColor3f(_r, _g, _b);
+                         glColor4f(_r, _g, _b, _a);
 			 glBegin(GL_LINES);
 				glVertex2i(AAX[i], l);
 				glVertex2i(AAX[i+1], l);
@@ -452,6 +452,11 @@ void Polygone::colorer(float _r, float _g, float _b)
 		  }
 	   }
     }
+}
+
+void Polygone::colorer(float _rgba[])
+{
+    colorer(_rgba[0], _rgba[1], _rgba[2], _rgba[3]);
 }
 
 void Polygone::vider(void)
