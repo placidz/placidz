@@ -178,13 +178,11 @@ void Polygone::colorer(float _r, float _g, float _b)
 {
     printf("*************************************************************************\n");
     printf("************************* Fonction COLORER ******************************\n");
-    printf("*************************************************************************\n");
 
     // On recopie les sommets du polygone dans un tableau à 2 dimensions, en séparant les X et les Y
     // S : tableau de sommets
     // ns : nombre de sommets
     int ns = PTS.size();
-    int nbTrous = TROUS.size();
     int S[2][ns];
     for (int i=0; i < ns; i++)
     {
@@ -192,56 +190,36 @@ void Polygone::colorer(float _r, float _g, float _b)
 	   S[1][i] = PTS[i].y;
     }
 
-    // TS : vecteur de tableau 2D [2][nbSommetsTrou]
-    vector<Tab> TS;
-
-    int nbSommetsTrou;
-    for (int ti=0; ti<nbTrous; ti++)
+    // On récupère les Y de chaque sommet ainsi que l'indice du sommet
+    // Y : tableau des ordonnées avec l'indice de sommet correspondant
+    int Y[2][ns];
+    for (int i=0; i < ns; i++)
     {
-	   nbSommetsTrou = TROUS[ti].PTS.size();
-	   Tab tab;
-	   // tab.t[2][nbSommetsTrou]
-	   tab.size = nbSommetsTrou;
-	   tab.t = new int * [2];
-	   std::fill_n( tab.t, 2, static_cast<int*>( 0 ) );
-	   // dimension 2 : les tableaux d'entiers
-	   for (int dim_allouee = 0; dim_allouee < 2; ++dim_allouee)
-	   {
-		  tab.t[dim_allouee] = new int[nbSommetsTrou];
-	   }
-	   for (int i=0; i<nbSommetsTrou; i++)
-	   {
-		  tab.t[0][i] = TROUS[ti].PTS[i].x;
-		  tab.t[1][i] = TROUS[ti].PTS[i].y;
-	   }
-	   TS.push_back(tab);
-	   delete [] tab.t;
+	   Y[0][i] = i;
+	   Y[1][i] = PTS[i].y;
     }
 
-    vector<int>Y;
-    for (int i=0; i<ns; i++)
-	   Y.push_back(S[1][i]);
-    for (int ti=0; ti<nbTrous; ti++)
+    // On trie les ordonnées Y dans l'ordre décroissant
+    bool en_desordre = true;
+    for (int i = 0; i < ns && en_desordre; ++i)
     {
-	   int nbSommetsTrou = TROUS[ti].PTS.size();
-	   for (int i=0; i<nbSommetsTrou; i++)
-		  Y.push_back(TROUS[ti].PTS[i].y);
+	   en_desordre = false;
+	   for (int j = 1; j < ns - i; ++j)
+		  if (Y[1][j-1] < Y[1][j])
+		  {
+		  std::swap(Y[0][j], Y[0][j-1]);
+		  std::swap(Y[1][j], Y[1][j-1]);
+		  en_desordre = true;
+	   }
     }
-
-    sort(Y.begin(), Y.end()); // trie dans l'ordre croissant
-    reverse(Y.begin(), Y.end()); // inverse l'ordre
-
-    for (int i=0; i<Y.size(); i++)
-	   printf("%d ", Y[i]);
-    printf("\n");
 
     // On épure la liste des ordonnées afin de virer les doublons
     vector<int> bo;
     int prev, curr;
-    prev = Y[0];
+    prev = Y[1][0];
     for (int i=1; i<ns; i++)
     {
-	   curr = Y[i];
+	   curr = Y[1][i];
 	   if (prev != curr)
 	   {
 		  bo.push_back(prev);
@@ -257,9 +235,9 @@ void Polygone::colorer(float _r, float _g, float _b)
 	   bornes[i] = bo[i];
 
     // On active pour chaque niveau, les arêtes qui sont concernées par le niveau courant
-    // BAA[ns][nbniv] : tableau à 2 dimensions nombre d'arêtes par nombre de niveaux
+    // BA[ns][nbniv] : tableau à 2 dimensions nombre d'arêtes par nombre de niveaux
     int bornesup, borneinf;
-    int BAA[ns][nbniv];
+    int BA[ns][nbniv];
     int sup, inf;
     Point2D tail, head;
     bool bSup, bInf;
@@ -269,7 +247,7 @@ void Polygone::colorer(float _r, float _g, float _b)
 	   bInf= 0;
 	   for (int ni=0; ni<nbniv-1; ni++)
 	   {
-		  BAA[i][ni] = 0;
+		  BA[i][ni] = 0;
 		  bornesup = bornes[ni];
 		  borneinf = bornes[ni+1];
 		  tail = getVertex(i);
@@ -294,7 +272,7 @@ void Polygone::colorer(float _r, float _g, float _b)
 		  }
 		  if (bSup)
 		  {
-			 BAA[i][ni] = 1;
+			 BA[i][ni] = 1;
 			 if (!bInf && inf == borneinf)
 			 {
 				bInf = 1;
@@ -304,62 +282,16 @@ void Polygone::colorer(float _r, float _g, float _b)
 	   }
     }
 
-    vector<Tab> BTAA;
-
-    for (int ti=0; ti<nbTrous; ti++)
+    for (int i=0; i<ns; i++)
     {
-	   nbSommetsTrou = TROUS[ti].PTS.size();
-	   Tab tab;
-	   tab.size = nbSommetsTrou;
-	   tab.t = new int * [ nbSommetsTrou ];
-	   std::fill_n( tab.t, nbSommetsTrou, static_cast<int*>( 0 ) );
-	   // dimension 2 : les tableaux d'entiers
-	   for (int dim_allouee = 0; dim_allouee < nbSommetsTrou; ++dim_allouee)
+	   printf("a: %d : ", i);
+	   for (int ni=0; ni<nbniv-1; ni++)
 	   {
-		  tab.t[ dim_allouee ] = new int[ nbniv ];
+		  printf("| %d | ", BA[i][ni]);
 	   }
-	   for (int i=0; i<nbSommetsTrou; i++)
-	   {
-		  bSup = 0;
-		  bInf= 0;
-		  for (int ni=0; ni<nbniv-1; ni++)
-		  {
-			 tab.t[i][ni] = 0;
-			 bornesup = bornes[ni];
-			 borneinf = bornes[ni+1];
-			 tail = getHoleVertex(ti, i);
-			 head = getHoleVertex(ti, i+1);
-			 sup = inf = -1;
-			 if (tail.y > head.y)
-			 {
-				sup = tail.y;
-				inf = head.y;
-			 }
-			 else
-			 {
-				if (tail.y < head.y)
-				{
-				    sup = head.y;
-				    inf = tail.y;
-				}
-			 }
-			 if (!bSup && sup == bornesup)
-			 {
-				bSup = 1;
-			 }
-			 if (bSup)
-			 {
-				tab.t[i][ni] = 1;
-				if (!bInf && inf == borneinf)
-				{
-				    bInf = 1;
-				}
-				if (bInf) bSup = 0;
-			 }
-		  }
-	   }
-	   BTAA.push_back(tab);
+	   printf("\n");
     }
+    printf("\n");
 
     // On parcourt chaque niveau, on regarde les arêtes actives, on calcule les intersections et on dessine
     int AAX[ns];
@@ -377,7 +309,7 @@ void Polygone::colorer(float _r, float _g, float _b)
 		  for (int i=0; i<ns; i++)
 		  {
 			 // ...si l'arête est concernée, on calcule l'intersection...
-			 if (BAA[i][ni])
+			 if (BA[i][ni])
 			 {
 				Point2D I, I1, I2;
 				Point2D dg(INT_MIN, l);
@@ -403,42 +335,6 @@ void Polygone::colorer(float _r, float _g, float _b)
 				}
 			 }
 		  }
-
-		  for (int ti=0; ti<nbTrous; ti++)
-		  {
-			 nbSommetsTrou = BTAA[ti].size;
-			 for (int i=0; i<nbSommetsTrou; i++)
-			 {
-				// ...si l'arête est concernée, on calcule l'intersection...
-				if (BTAA[ti].t[i][ni])
-				{
-				    Point2D I, I1, I2;
-				    Point2D dg(INT_MIN, l);
-				    Point2D dd(INT_MAX, l);
-				    Point2D pa, pb, pc;
-
-				    pa.Set(TS[ti].t[0][i], TS[ti].t[1][i]);
-
-				    if (i < TS[ti].size-1) pb.Set(TS[ti].t[0][i+1], TS[ti].t[1][i+1]);
-				    else if (i == TS[ti].size-1) pb.Set(TS[ti].t[0][0], TS[ti].t[1][0]);
-
-				    if (pa.y == pb.y)
-				    {
-					   AAX[naa++] = pa.x;
-					   AAX[naa++] = pb.x;
-				    }
-				    else
-				    {
-					   if (pa.y == l) I.x = pa.x;
-					   else if (pb.y == l) I.x = pb.x;
-					   else I = computeIntersection(pa, pb, dg, dd);
-					   AAX[naa++] = I.x;
-				    }
-				}
-			 }
-		  }
-
-
 		  // ...on trie le tableau des X intersectés dans l'ordre croissant...
 		  sortByAscOrder(AAX, naa);
 		  // ...et enfin on dessine la ligne de remplissage.
@@ -498,7 +394,6 @@ void Polygone::tracerTrous(int _modeAffichage)
     {
 	   glColor3f(0.0, 1.0, 0.0);
 	   TROUS.at(i).tracerAretes(_modeAffichage);
-	   glColor3f(0.0, 0.0, 1.0);
 	   TROUS.at(i).tracerSommets();
     }
 }
