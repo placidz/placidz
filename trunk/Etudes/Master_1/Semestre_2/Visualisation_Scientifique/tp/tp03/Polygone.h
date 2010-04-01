@@ -1,7 +1,6 @@
 #ifndef POLYGONE_H
 #define POLYGONE_H
 
-#include <curses.h>
 #include <stdio.h>
 #include <iostream>
 #include <vector>
