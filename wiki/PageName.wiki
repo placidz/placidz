@@ -1,5 +1,3 @@
-#summary One-sentence summary of this page.
-
 [http://www.opengl.org/sdk/docs/man/ OpenGL Reference Pages]
 
 = Introduction =
