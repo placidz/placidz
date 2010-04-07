@@ -12,7 +12,10 @@
 	#include <GL/glut.h>
 #endif
 
+extern "C"
+{
 #include <ml.h>
+}
 
 
 #define MAX	50
@@ -30,8 +33,6 @@ int bMovePoint = 0;
 
 int winX	  = 800;
 int winY	  = 600;
-int mouseX;
-int mouseY;
 
 int indPt = -1;
 int mouseX, mouseY;

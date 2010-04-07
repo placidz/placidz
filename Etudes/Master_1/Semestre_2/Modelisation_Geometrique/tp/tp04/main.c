@@ -1,7 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <ml.h>
 
+extern "C"
+{
+#include <ml.h>
+}
 
 #ifdef __APPLE__
 	#include <OpenGL/gl.h>

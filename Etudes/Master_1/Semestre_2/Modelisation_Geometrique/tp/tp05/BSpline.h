@@ -11,26 +11,13 @@ extern "C"
 #include <math.h>
 
 #include "defines.h"
+#include "tools.h"
 
-class BSpline
-{
-	public:
-	mlVec3 ctrl[MAX];
-	int nCtrl;
-	mlVec3 bP[MAX2];
-	int nBP;
-	int degreBS;
-	int winY;
-	
-	BSpline();
-	~BSpline();
-	BSpline(int _winY);
-	
-	int fact(int _i);
-	double computeRiesenfeldCoeff(int _i, int _m, double _t);
-	void computeBSplinePoint(mlVec3 _ctrl[MAX], int _m, int _k, double _t, mlVec3 _q);
-	void computeBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP, int _m);
-	void drawBSplineCurve(mlVec3 _bP[MAX2], int _nBP);
 
-};
+void drawBSplineSurface(mlVec3** _ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv);
+void drawBSplineControlPointsSurface(mlVec3 **_ctrl, int _size_u, int _size_v);
+
+void drawBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP, int _m);
+
+
 #endif

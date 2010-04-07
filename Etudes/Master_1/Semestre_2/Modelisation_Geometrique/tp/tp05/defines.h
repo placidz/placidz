@@ -1,2 +1,2 @@
-#define MAX 20
-#define MAX2 100
+#define MAX 500
+#define MAX2 5000

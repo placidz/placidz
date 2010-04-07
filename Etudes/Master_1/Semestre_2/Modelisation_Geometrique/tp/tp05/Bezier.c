@@ -1,148 +1,137 @@
 #include "Bezier.h"
 
-Bezier::Bezier()
+int tabPascal[100][100];
+
+void tPascal()
 {
-	nCtrl = 0;
-	nBP = 5;
-	tConstruction = 0.5;
+    int n = 100;
+    for(int y = 0; y < n; y++)
+	  for(int x = 0; x <= y; x++)
+		if(x == 0 || x==y) tabPascal[x][y] = 1;
+		else tabPascal[x][y] = tabPascal[x-1][y-1] + tabPascal[x][y-1];
 }
 
-Bezier::~Bezier()
+double computeBernsteinCoeff(int _n, int _i, double _t)
 {
-}
-
-Bezier::Bezier(int _winY)
-{
-	nCtrl = 0;
-	nBP = 5;
-	tConstruction = 0.5;
-	winY = _winY;
-}
-
-double Bezier::fact(int _i)
-{
-     if (_i > 1) return (_i*fact(_i-1));
-     else return (1);
+    return tabPascal[_i][_n]*pow(_t,_i)*pow(1-_t,_n-_i);
 }
 
 
-double Bezier::computeBernsteinCoeff(int _n, int _i, double _t)
+//////////////////////////////////////////
+// SURFACES DE BEZIER			    //
+//////////////////////////////////////////
+
+void computeBezierPointSurface(mlVec3 **_ctrl, int _size_u, int _size_v, double _u, double _v, mlVec3 _q)
 {
-	return ((fact(_n) / (fact(_i)*fact(_n-_i)))*((double)pow((double)_t, _i)*(double)pow((double)1-_t, _n-_i)));
+    double coefBu = 0;
+    double coefBv = 0;
+    mlVec3 tmp;
+    mlVec3_Zero(_q);
+    for (int j = 0; j < _size_v; j++)
+    {
+	  coefBv = computeBernsteinCoeff(_size_v-1, j, _v);
+	  for (int i = 0; i < _size_u; i++)
+	  {
+		coefBu = computeBernsteinCoeff(_size_u-1, i, _u);
+		mlVec3_Scale(tmp, _ctrl[i][j], coefBu);
+		mlVec3_Scale(tmp, tmp, coefBv);
+		mlVec3_AddVec(_q, _q, tmp);
+	  }
+    }
+}
+
+void computeBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
+{
+    double tu, tv;
+    for (int j = 0; j < _nBP+1; j++)
+    {
+	  tv = j/(double)_nBP;
+	  for (int i = 0; i < _nBP+1; i++)
+	  {
+		tu = i/(double)_nBP;
+		computeBezierPointSurface(_ctrl, _size_u, _size_v, tu, tv, _bP[i + j*(_nBP+1)]);
+	  }
+    }
 }
 
 
-void Bezier::computeBezierPoint(mlVec3 _ctrl[MAX], int _nCtrl, double _t, mlVec3 _q)
+void drawBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
 {
-	int i, j;
-	float x = 0, y = 0, z = 0;
-	double coeffBernstein = 0;
-	for(i = 0; i < _nCtrl; i++)
-	{
-		coeffBernstein = computeBernsteinCoeff(_nCtrl-1, i, _t);
-		x += (_ctrl[i][0] * coeffBernstein);
-		y += (_ctrl[i][1] * coeffBernstein);
-		z += (_ctrl[i][2] * coeffBernstein);
-	}
-	mlVec3_Set(_q, x, y, z);
+    glDisable(GL_LIGHTING);
+    tPascal();
+    computeBezierSurface(_ctrl, _size_u, _size_v, _bP, _nBP);
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_QUADS);
+    for (int j = 0; j < _nBP; j++)
+    {
+	  for (int i = 0; i < _nBP; i++)
+	  {
+		glVertex3dv(_bP[i + j*(_nBP+1)]);
+		glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+		glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+		glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+	  }
+    }
+    glEnd();
+
+    drawBezierControlPointsSurface(_ctrl, _size_u, _size_v);
+    glEnable(GL_LIGHTING);
 }
 
 
-void Bezier::computeBezierCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP)
+void drawBezierControlPointsSurface(mlVec3 **_ctrl, int _size_u, int _size_v)
 {
-	int i;
-	for(i = 0; i < _nBP+1; i++)
-	{
-		computeBezierPoint(_ctrl, _nCtrl, i/(double)_nBP, _bP[i]);
-	}
+    glPointSize(5.0);
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_POINTS);
+    for (int u = 0; u < _size_u; u++)
+	  for (int v = 0; v < _size_v; v++)
+		glVertex3dv(_ctrl[u][v]);
+    glEnd();
+    glPointSize(1.0);
 }
 
 
-void Bezier::drawBezierCurve(mlVec3 _bP[MAX2], int _nBP)
+//////////////////////////////////////////
+// COURBES DE BEZIER			    //
+//////////////////////////////////////////
+
+void computeBezierPoint(mlVec3 _ctrl[MAX], int _nCtrl, double _t, mlVec3 _q)
 {
-	int i;
-	glBegin(GL_LINE_STRIP);
-	glColor3f(0.0, 0.0, 1.0);
-	for (i = 0; i < _nBP+1; i++)
-	{
-		glVertex3f(_bP[i][0], winY-_bP[i][1], _bP[i][2]);
-	}
-	glEnd();
+    int i, j;
+    double coeffBernstein = 0;
+    mlVec3 tmp;
+    mlVec3_Zero(_q);
+    for(i = 0; i < _nCtrl; i++)
+    {
+	  coeffBernstein = computeBernsteinCoeff(_nCtrl-1, i, _t);
+	  mlVec3_Scale(tmp, _ctrl[i], coeffBernstein);
+	  mlVec3_AddVec(_q, _q, tmp);
+    }
 }
 
 
-void Bezier::computeDeCasteljau(mlVec3 _ctrl[MAX], int _nCtrl, double _t, mlVec3 _castel[MAX][MAX])
+void computeBezierCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP)
 {
-	int i, j;
-	float x, y;
-	for (i = 0; i < _nCtrl; i++)
-		mlVec3_Set(_castel[i][0], _ctrl[i][0], _ctrl[i][1], _ctrl[i][2]);
-
-	for (j = 1; j < _nCtrl; j++)
-	{
-		for (i = 0; i < _nCtrl-j; i++)
-		{
-			x = _t*_castel[i+1][j-1][0] + (1-_t)*_castel[i][j-1][0];
-			y = _t*_castel[i+1][j-1][1] + (1-_t)*_castel[i][j-1][1];
-			mlVec3_Set(_castel[i][j], x, y, 0);
-		}
-	}
+    tPascal();
+    int i;
+    for(i = 0; i < _nBP+1; i++)
+    {
+	  computeBezierPoint(_ctrl, _nCtrl, i/(double)_nBP, _bP[i]);
+    }
 }
 
 
-void Bezier::drawConstruction(mlVec3 _castel[MAX][MAX], int _n)
+void drawBezierCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP)
 {
-	int i, j;
-	int cpt =0;
-	computeDeCasteljau(ctrl, nCtrl, tConstruction, _castel);
-	glColor3f(0.4, 0.4, 0.4);
-	for (j = 0; j < _n-1; j++)
-	{
-		for (i = 0; i < _n-j-1; i++)
-		{
-			glBegin(GL_LINE_STRIP);
-				glVertex2f(_castel[i][j][0], winY-_castel[i][j][1]);
-				glVertex2f(_castel[i+1][j][0], winY-_castel[i+1][j][1]);
-			glEnd();
-		}
-	}
-	glColor3f(0.5, 0.5, 0.5);
-	glPointSize(4.0);
-	for (j = 1; j < _n; j++)
-	{
-		for (i = 0; i < _n-j; i++)
-		{
-			glBegin(GL_POINTS);
-				glVertex2f(_castel[i][j][0], winY-_castel[i][j][1]);;
-			glEnd();
-		}
-	}
-	glPointSize(5.0);
+
+    computeBezierCurve(_ctrl, _nCtrl, _bP, _nBP);
+    int i;
+    glBegin(GL_LINE_STRIP);
+    glColor3f(0.0, 0.0, 1.0);
+    for (i = 0; i < _nBP+1; i++)
+    {
+	  glVertex3dv(_bP[i]);
+    }
+    glEnd();
 }
-
-
-void Bezier::computeDeCasteljauCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP)
-{
-	int i;
-	float x, y;
-	for(i = 0; i < _nBP+1; i++)
-	{
-		computeDeCasteljau(_ctrl, _nCtrl, i/(double)_nBP, castel);
-		x = castel[0][_nCtrl-1][0];
-		y = castel[0][_nCtrl-1][1];
-		mlVec3_Set(_bP[i], x, y, 0);
-	}
-}
-
-
-void Bezier::drawDeCasteljauCurve(mlVec3 _bP[MAX2], int _nBP)
-{
-	int i;
-	glBegin(GL_LINE_STRIP);
-	glColor3f(1.0, 0.0, 0.0);
-	for (i = 0; i < _nBP+1; i++)
-	{
-		glVertex3f(_bP[i][0], winY-_bP[i][1], _bP[i][2]);
-	}
-	glEnd();
-} 

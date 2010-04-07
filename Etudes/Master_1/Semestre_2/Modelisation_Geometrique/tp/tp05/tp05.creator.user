@@ -1,0 +1,101 @@
+<!DOCTYPE QtCreatorProject>
+<qtcreator>
+ <data>
+  <variable>activeRunConfiguration</variable>
+  <value type="int">0</value>
+ </data>
+ <data>
+  <variable>activebuildconfiguration</variable>
+  <value type="QString">all</value>
+ </data>
+ <data>
+  <variable>buildConfiguration-all</variable>
+  <valuemap type="QVariantMap">
+   <value key="ProjectExplorer.BuildConfiguration.DisplayName" type="QString">all</value>
+   <value key="buildDirectory" type="QString">/home/placid/dev/Etudes/Master_1/Semestre_2/Modelisation_Geometrique/tp/tp05</value>
+  </valuemap>
+ </data>
+ <data>
+  <variable>buildconfiguration-all-buildstep0</variable>
+  <valuemap type="QVariantMap">
+   <value key="ProjectExplorer.BuildConfiguration.DisplayName" type="QString">all</value>
+   <valuelist key="abstractProcess.Environment" type="QVariantList">
+    <value type="QString">DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-eVTWlInvY9,guid=1a4e655e9dd231724397c0ce4bbb1f48</value>
+    <value type="QString">DESKTOP_SESSION=gnome</value>
+    <value type="QString">DISPLAY=:0.0</value>
+    <value type="QString">GDMSESSION=gnome</value>
+    <value type="QString">GDM_KEYBOARD_LAYOUT=fr	oss</value>
+    <value type="QString">GDM_LANG=fr_FR.UTF-8</value>
+    <value type="QString">GNOME_DESKTOP_SESSION_ID=this-is-deprecated</value>
+    <value type="QString">GNOME_KEYRING_PID=2039</value>
+    <value type="QString">GNOME_KEYRING_SOCKET=/tmp/keyring-v4etSb/socket</value>
+    <value type="QString">GTK_MODULES=canberra-gtk-module</value>
+    <value type="QString">GTK_RC_FILES=/etc/gtk/gtkrc:/home/placid/.gtkrc-1.2-gnome2</value>
+    <value type="QString">HOME=/home/placid</value>
+    <value type="QString">LANG=fr_FR.UTF-8</value>
+    <value type="QString">LD_LIBRARY_PATH=/home/placid/qtcreator-1.3.1/lib/qtcreator:</value>
+    <value type="QString">LOGNAME=placid</value>
+    <value type="QString">ORBIT_SOCKETDIR=/tmp/orbit-placid</value>
+    <value type="QString">PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games</value>
+    <value type="QString">PWD=/home/placid</value>
+    <value type="QString">SESSION_MANAGER=local/placid-laptop:@/tmp/.ICE-unix/2054,unix/placid-laptop:/tmp/.ICE-unix/2054</value>
+    <value type="QString">SHELL=/bin/bash</value>
+    <value type="QString">SPEECHD_PORT=7560</value>
+    <value type="QString">SSH_AGENT_PID=2097</value>
+    <value type="QString">SSH_AUTH_SOCK=/tmp/keyring-v4etSb/socket.ssh</value>
+    <value type="QString">USER=placid</value>
+    <value type="QString">USERNAME=placid</value>
+    <value type="QString">XAUTHORITY=/var/run/gdm/auth-for-placid-EYTQNk/database</value>
+    <value type="QString">XDG_DATA_DIRS=/usr/share/gnome:/usr/local/share/:/usr/share/</value>
+    <value type="QString">XDG_SESSION_COOKIE=46966b38f48ea35f024cc3734978a1ba-1270554440.14143-863300112</value>
+   </valuelist>
+   <valuelist key="abstractProcess.arguments" type="QVariantList">
+    <value type="QString">all</value>
+   </valuelist>
+   <value key="abstractProcess.command" type="QString">make</value>
+   <value key="abstractProcess.enabled" type="bool">true</value>
+   <value key="abstractProcess.workingDirectory" type="QString">/home/placid/dev/Etudes/Master_1/Semestre_2/Modelisation_Geometrique/tp/tp05</value>
+   <valuelist key="buildTargets" type="QVariantList">
+    <value type="QString">all</value>
+   </valuelist>
+  </valuemap>
+ </data>
+ <data>
+  <variable>buildconfigurations</variable>
+  <valuelist type="QVariantList">
+   <value type="QString">all</value>
+  </valuelist>
+ </data>
+ <data>
+  <variable>buildstep0</variable>
+  <valuemap type="QVariantMap">
+   <value key="ProjectExplorer.BuildConfiguration.DisplayName" type="QString"></value>
+  </valuemap>
+ </data>
+ <data>
+  <variable>buildsteps</variable>
+  <valuelist type="QVariantList">
+   <value type="QString">GenericProjectManager.MakeStep</value>
+  </valuelist>
+ </data>
+ <data>
+  <variable>cleansteps</variable>
+  <valuelist type="QVariantList"/>
+ </data>
+ <data>
+  <variable>defaultFileEncoding</variable>
+  <value type="QByteArray">System</value>
+ </data>
+ <data>
+  <variable>includePaths</variable>
+  <valuelist type="QVariantList"/>
+ </data>
+ <data>
+  <variable>project</variable>
+  <valuemap type="QVariantMap"/>
+ </data>
+ <data>
+  <variable>toolChain</variable>
+  <value type="int">0</value>
+ </data>
+</qtcreator>
