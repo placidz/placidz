@@ -2,7 +2,7 @@ OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
 = Menu =
 
-  # [#Introduction Introduction]
+  # [#Bases Bases]
    # [#Primitives_de_rendu Primitives de rendu]
     # [#Exemple_1 Exemple]
    # [#Display_List Display List]
@@ -10,7 +10,7 @@ OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
 ----
 
-= Introduction =
+= Bases =
 
 == Primitives de rendu ==
 
