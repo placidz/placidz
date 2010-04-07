@@ -3,11 +3,16 @@ OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 = Menu =
 
   # [#Introduction Introduction]
-   # [#Bases Bases]
+   # [#Primitives_de_rendu Primitives de rendu]
+    # [#Exemple Exemple]
+   # [#Display_List Display List]
+    # [#Exemple Exemple]
+
+----
 
 = Introduction =
 
-== Bases ==
+== Primitives de rendu ==
 
 L'affichage se fait très simplement, il suffit d'appeler les primitives glBegin et glEnd dans le callback display du programme OpenGL.
 
@@ -27,3 +32,26 @@ _mode_ doit être remplacé par l'un des flags suivant :
   * *GL_POLYGON* : dessine un polygone convexe
 
 {{{void glEnd(void);}}}
+
+=== Exemple ===
+
+{{{
+glDrawTriangle()
+{
+  glBegin(GL_TRIANGLES);
+    glVertex2f(0.0, 0.0);
+    glVertex2f(10.0, 0.0);
+    glVertex2f(5.0, 10.0);
+  glEnd();
+}
+}}}
+
+----
+
+== Display List ==
+
+Soon
+
+=== Exemple ===
+
+Soon2
