@@ -2,8 +2,8 @@ OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
 = Menu =
 
-  # [OpenGL_Bases#Introduction]
-   # [OpenGL_Bases#Bases]
+  # [#Introduction Introduction]
+   # [#Bases Bases]
 
 = Introduction =
 
