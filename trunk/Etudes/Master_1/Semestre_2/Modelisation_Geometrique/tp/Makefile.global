@@ -1,95 +1,108 @@
+#################################################################################
+# ___  ___        _            __  _  _                                         #
+# |  \/  |       | |          / _|(_)| |                                        #
+# | .  . |  __ _ | | __  ___ | |_  _ | |  ___                                   #
+# | |\/| | / _` || |/ / / _ \|  _|| || | / _ \                                  #
+# | |  | || (_| ||   < |  __/| |  | || ||  __/                                  #
+# \_|  |_/ \__,_||_|\_\ \___||_|  |_||_| \___|                                  #
+#                                                                               #
+#  Copyright (c) 2010                                                           #
+#  Author: Dimitri KUDELSKI                                                     #
+#  Contact: kudelski [at] univmed [dot] fr                                      #
+#                                                                               #
+#                                                                               #
+# This program is free software: you can redistribute it and/or modify it under #
+# the terms of the GNU General Public License as published by the Free Software #
+# Foundation, either version 3 of the License, or (at your option) any later    #
+# version.                                                                      #
+#                                                                               #
+# This program is distributed in the hope that it will be useful, but WITHOUT   #
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS #
+# FOR A PARTICULAR PURPOSE. See the GNU General Public License for more         #
+# details.                                                                      #
+#                                                                               #
+#################################################################################
+
+
 # -------------------------------------------------------------------
 # Environment
-WORKDIR = .
-SRCDIR	= .
-INCDIR	= .
-OBJDIR	= $(WORKDIR)/.obj
-DEPDIR	= $(WORKDIR)/.dep
 # -------------------------------------------------------------------
-
-
-# -------------------------------------------------------------------
-# 'Tools' directory
-TOOLDIR = $(WORKDIR)/../../gmtools
-TOOLINC = -I $(TOOLDIR)/ml/inc -I $(TOOLDIR)/he/inc
-TOOLLIB = $(TOOLDIR)/ml/lib/libml.a $(TOOLDIR)/he/lib/libhe.a
+WORKDIR		= .
+SRCDIR		= $(WORKDIR)/.
+BINDIR		= $(WORKDIR)/.
+MAKEDIR		= $(WORKDIR)/.make
+GMTOOLS		= $(WORKDIR)/../../gmtools
 # -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
 # Files
-SOURCES	= $(wildcard $(SRCDIR)/*.c)
-HEADERS	= $(wildcard $(INCDIR)/*.h)
-OBJECTS	= $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-DEPS	= $(SOURCES:$(SRCDIR)/%.c=$(DEPDIR)/%.d)
+# -------------------------------------------------------------------
+SOURCES		= $(wildcard $(SRCDIR)/*.c)
+OBJECTS		= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.o)
+DEPS		= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.d)
+#TARGET		= $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%)
 # -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
 # Compiler and flags
-CC		= g++
-CFLAGS	= -ansi -pedantic -D_GNU_SOURCE -O3 -W -Wall -Wno-unused -ggdb3
-INCS	= $(TOOLINC)
-LIBS	= $(TOOLLIB)
+# -------------------------------------------------------------------
+CC			= g++
+CFLAGS		= -ansi -pedantic -D_GNU_SOURCE -W -Wall -Werror -ggdb3
+INCPATH		= -I. -I$(INCDIR) -I$(INCDIR)/$(PROJECT) -I$(GMTOOLS)/ml/inc -I$(GMTOOLS)/he/inc
+LIBPATH		= -L$(GMTOOLS)/ml/lib -L$(GMTOOLS)/he/lib
+LDFLAGS		= -lhe -lml -lm
 
 ifdef windir
-	LIBS += -l opengl32 -l glu32 -l glut32
+	LDFLAGS += -lopengl32 -lglu32 -lglut32
 else
 	ifeq ($(shell uname),Darwin)
-		LIBS += -framework GLUT -framework OpenGL -framework Accelerate
+		LDFLAGS += -framework GLUT -framework OpenGL -framework Accelerate
 	else
-		LIBS += -lGL -lGLU -lglut
+		LDFLAGS += -lGL -lGLU -lglut
 	endif
 endif
-# -------------------------------------------------------------------
 
-
-# -------------------------------------------------------------------
-# Binaries
-ECHO	= /bin/echo
-RM		= rm
-CP		= cp
-BNAME	= basename
-SED		= sed
 # -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
 # Rules
+# -------------------------------------------------------------------
 all : $(TARGET)
-
-$(TARGET) : $(OBJECTS)
-	@$(ECHO) -n "+ Building binary '`$(BNAME) $@`' : "
-	@$(CC) $(CFLAGS) $(INCS) $^ $(LIBS) -o $@
-	@$(ECHO) "OK"
-
-$(DEPDIR)/%.d : $(SRCDIR)/%.c
-	@$(ECHO) -n "@ Generating dependencies of '`$(BNAME) $<`' : "
-	@$(CC) $(CFLAGS) $(INCS) -MM -MG $< | $(SED) -e 's,^\([^:]*\)\.o[ ]*:,$(OBJDIR)/\1.o $(DEPDIR)/\1.d:,' > $@
-	@$(ECHO) "OK"
-
-$(OBJDIR)/%.o : $(SRCDIR)/%.c
-	@$(ECHO) -n "~ Compilation of '`$(BNAME) $<`' : "
-	@$(CC) $(CFLAGS) $(INCS) -c $< -o $@
-	@$(ECHO) "OK"
 	
+$(TARGET): $(OBJECTS)
+	@/bin/echo -n "+ Building binary '`basename $@`' : "
+	@$(CC) $(CFLAGS) $(INCPATH) $(LIBPATH) $^ $(LDFLAGS) -o $@
+	@/bin/echo "OK"
+
+
+$(MAKEDIR)/%.d : $(SRCDIR)/%.c
+	@if [ ! -e $(MAKEDIR) ]; then mkdir $(MAKEDIR); fi
+	@/bin/echo -n "@ Generating dependencies of '`basename $<`' : "
+	@$(CC) $(CFLAGS) $(INCPATH) -MM -MG $< | sed -e 's,^\([^:]*\)\.o[ ]*:,$(MAKEDIR)/\1.o $(MAKEDIR)/\1.d:,' > $@
+	@/bin/echo "OK"
+
+
+$(MAKEDIR)/%.o : $(SRCDIR)/%.c
+	@if [ ! -e $(MAKEDIR) ]; then mkdir $(MAKEDIR); fi
+	@/bin/echo -n "~ Compilation of '`basename $<`' : "
+	@$(CC) $(CFLAGS) $(INCPATH) -c $< -o $@
+	@/bin/echo "OK"
+
+
 clean :
-	@$(ECHO) -n "- Deleting : "
-	@$(RM) -f $(OBJECTS) $(TARGET)
-	@$(ECHO) "OK"
-	
-clean-all :
-	@$(ECHO) -n "- Deleting : "
-	@$(RM) -f $(OBJECTS) $(TARGET) $(DEPS)
-	@$(ECHO) "OK"
+	@/bin/echo -n "- Deleting : "
+	@rm -f $(MAKEDIR)/*.o $(MAKEDIR)/*.d $(TARGET)
+	@/bin/echo "OK"
 # -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
 # Includes
+# -------------------------------------------------------------------
 ifneq ($(MAKECMDGOALS),clean)
-ifneq ($(MAKECMDGOALS),clean-all)
--include $(DEPS)
-endif
+	-include $(DEPS)
 endif
 # -------------------------------------------------------------------
