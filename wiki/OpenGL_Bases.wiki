@@ -1,4 +1,4 @@
-[http://www.opengl.org/sdk/docs/man/ OpenGL Reference Pages]
+OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
 = Introduction =
 
