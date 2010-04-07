@@ -4,9 +4,9 @@ OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
   # [#Introduction Introduction]
    # [#Primitives_de_rendu Primitives de rendu]
-    # [#Exemple Exemple]
+    # [#Exemple_1 Exemple]
    # [#Display_List Display List]
-    # [#Exemple Exemple]
+    # [#Exemple_2 Exemple]
 
 ----
 
@@ -33,7 +33,7 @@ _mode_ doit être remplacé par l'un des flags suivant :
 
 {{{void glEnd(void);}}}
 
-=== Exemple ===
+=== Exemple 1 ===
 
 {{{
 glDrawTriangle()
@@ -52,6 +52,6 @@ glDrawTriangle()
 
 Soon
 
-=== Exemple ===
+=== Exemple 2 ===
 
 Soon2
