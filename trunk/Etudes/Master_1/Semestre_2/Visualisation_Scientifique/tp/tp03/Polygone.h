@@ -54,6 +54,6 @@ public:
     void tracerSommets(void);
     void tracerAretes(int _modeAffichage);
     void tracerTrous(int _modeAffichage);
-    void afficherCoords(int _height);
+    void afficherCoords();
 };
 #endif

@@ -179,21 +179,16 @@ void Polygone::deplacer(int _x, int _y)
 
 void Polygone::colorer(float _r, float _g, float _b, float _a)
 {
-    printf("\n*************************************************************************\n");
-    printf("************************* Fonction COLORER ******************************\n");
-    printf("*************************************************************************\n\n");
+    int nbSommetsPoly = PTS.size(); // nombre de sommets du polygone
+    int nbTrous = TROUS.size();	// nombre de trous dans le polygone
+    int nbSommetsTrou = 0;		// nombre de sommets pour le trou courant
 
-    // On recopie les sommets du polygone dans un tableau à 2 dimensions, en séparant les X et les Y
-    // S : tableau de sommets
-    // nbSommetsPoly : nombre de sommets
-    int nbSommetsPoly = PTS.size();
-    int nbTrous = TROUS.size();
-    int nbSommetsTrou = 0;
-
+    // On récupère les ordonnées de chaque sommet du polygone...
     vector<int>Y;
     for (int i=0; i<nbSommetsPoly; i++)
 	  Y.push_back(PTS[i].y);
 
+    // ...et aussi de chaque sommet de chaque trou du polygone.
     for (int ti=0; ti<nbTrous; ti++)
     {
 	  nbSommetsTrou = TROUS[ti].PTS.size();
@@ -201,8 +196,8 @@ void Polygone::colorer(float _r, float _g, float _b, float _a)
 		Y.push_back(TROUS[ti].PTS[i].y);
     }
 
-    sort(Y.begin(), Y.end()); // trie dans l'ordre croissant
-    reverse(Y.begin(), Y.end()); // inverse l'ordre
+    sort(Y.begin(), Y.end()); // Tri dans l'ordre croissant
+    reverse(Y.begin(), Y.end()); // Inverse l'ordre
 
     // On épure la liste des ordonnées afin de virer les doublons
     vector<int> bornes;
@@ -272,7 +267,6 @@ void Polygone::colorer(float _r, float _g, float _b, float _a)
 	  tab.size = nbSommetsTrou;
 	  tab.t = new int * [nbSommetsTrou];
 	  std::fill_n( tab.t, nbSommetsTrou, static_cast<int*>( 0 ) );
-	  // dimension 2 : les tableaux d'entiers
 	  for (int dim_allouee = 0; dim_allouee < nbSommetsTrou; ++dim_allouee)
 	  {
 		tab.t[dim_allouee] = new int[nbNiveaux];
@@ -441,7 +435,7 @@ void Polygone::tracerTrous(int _modeAffichage)
     }
 }
 
-void Polygone::afficherCoords(int _height)
+void Polygone::afficherCoords()
 {
     if (!PTS.empty())
     {
