@@ -1,0 +1,26 @@
+#summary One-sentence summary of this page.
+
+[http://www.opengl.org/sdk/docs/man/ OpenGL Reference Pages]
+
+= Introduction =
+
+== Base ==
+
+L'affichage se fait très simplement, il suffit d'appeler les primitives glBegin et glEnd dans le callback display du programme OpenGL.
+
+{{{void glBegin(GLenum mode);}}}
+
+_mode_ doit être remplacé par l'un des flags suivant :
+
+  * *GL_POINTS* : dessine un point pour chaque vertex
+  * *GL_LINES* : dessine une ligne entre 2 vertex
+  * *GL_LINE_STRIP* : dessine une chaîne de lignes
+  * *GL_LINE_LOOP* : dessine une chaîne de lignes qui boucle sur le premier vertex
+  * *GL_TRIANGLES* : dessine un triangle à partir de 3 vertex
+  * *GL_TRIANGLE_STRIP* : dessine des triangles à partir des 2 derniers vertex du précédent triangle
+  * *GL_TRIANGLE_FAN* : dessine des triangles avec toujours le premier vertex comme premier point de chaque triangle
+  * *GL_QUADS* : dessine un quadrilatère à partir de 4 vertex
+  * *GL_QUAD_STRIP* : dessine des quadrilatères en réutilisant les 2 derniers vertex du précédent quadrilatère
+  * *GL_POLYGON* : dessine un polygone convexe
+
+{{{void glEnd(void);}}}
