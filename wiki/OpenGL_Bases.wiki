@@ -1,8 +1,13 @@
 OpenGL Reference Pages : http://www.opengl.org/sdk/docs/man/
 
+= Menu =
+
+  # [OpenGL_Bases#Introduction]
+   # [OpenGL_Bases#Bases]
+
 = Introduction =
 
-== Base ==
+== Bases ==
 
 L'affichage se fait très simplement, il suffit d'appeler les primitives glBegin et glEnd dans le callback display du programme OpenGL.
 
