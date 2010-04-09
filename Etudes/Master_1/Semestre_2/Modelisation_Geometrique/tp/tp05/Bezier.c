@@ -2,7 +2,7 @@
 
 int tabPascal[100][100];
 
-void tPascal()
+void computeTrianglePascal()
 {
     int n = 100;
     for(int y = 0; y < n; y++)
@@ -16,12 +16,12 @@ double computeBernsteinCoeff(int _n, int _i, double _t)
     return tabPascal[_i][_n]*pow(_t,_i)*pow(1-_t,_n-_i);
 }
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////
 // SURFACES DE BEZIER			    //
 //////////////////////////////////////////
 
-void computeBezierPointSurface(mlVec3 **_ctrl, int _size_u, int _size_v, double _u, double _v, mlVec3 _q)
+void computeBezierPointSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _u, double _v, mlVec3 _q)
 {
     double coefBu = 0;
     double coefBv = 0;
@@ -40,7 +40,7 @@ void computeBezierPointSurface(mlVec3 **_ctrl, int _size_u, int _size_v, double 
     }
 }
 
-void computeBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
+void computeBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
 {
     double tu, tv;
     for (int j = 0; j < _nBP+1; j++)
@@ -55,43 +55,40 @@ void computeBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[M
 }
 
 
-void drawBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
+void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
 {
     glDisable(GL_LIGHTING);
-    tPascal();
+    computeTrianglePascal();
     computeBezierSurface(_ctrl, _size_u, _size_v, _bP, _nBP);
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_QUADS);
+
+    glLineWidth(2.0);
     for (int j = 0; j < _nBP; j++)
     {
 	  for (int i = 0; i < _nBP; i++)
 	  {
-		glVertex3dv(_bP[i + j*(_nBP+1)]);
-		glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
-		glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
-		glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+		glColor3f(0.0, 0.0, 1.0);
+		glBegin(GL_QUADS);
+		    glVertex3dv(_bP[i + j*(_nBP+1)]);
+		    glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+		    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+		    glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+		glEnd();
+
+		glColor3f(0.0, 0.0, 0.0);
+		glBegin(GL_LINE_LOOP);
+		    glVertex3dv(_bP[i + j*(_nBP+1)]);
+		    glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+		    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+		    glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+		glEnd();
 	  }
     }
-    glEnd();
+    glLineWidth(1.0);
 
-    drawBezierControlPointsSurface(_ctrl, _size_u, _size_v);
     glEnable(GL_LIGHTING);
 }
 
-
-void drawBezierControlPointsSurface(mlVec3 **_ctrl, int _size_u, int _size_v)
-{
-    glPointSize(5.0);
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_POINTS);
-    for (int u = 0; u < _size_u; u++)
-	  for (int v = 0; v < _size_v; v++)
-		glVertex3dv(_ctrl[u][v]);
-    glEnd();
-    glPointSize(1.0);
-}
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////
 // COURBES DE BEZIER			    //
 //////////////////////////////////////////
@@ -113,7 +110,7 @@ void computeBezierPoint(mlVec3 _ctrl[MAX], int _nCtrl, double _t, mlVec3 _q)
 
 void computeBezierCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP)
 {
-    tPascal();
+    computeTrianglePascal();
     int i;
     for(i = 0; i < _nBP+1; i++)
     {

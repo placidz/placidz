@@ -11,14 +11,15 @@ double computeRiesenfeldCoeff(int _i, int _m, double _t)
 {
     int k;
     double somme = 0;
-    for (k = 0; k <= _m-_i; k++)
+    for (k = 0; k <= (_m-_i); k++)
     {
-	  somme += pow(-1, k) * (pow(_t+_m-_i-k, _m)/(fact(k)*fact(_m-k+1)));
+	  somme += pow(-1, k) * (pow(_t+_m-_i-k, _m)/(double)(fact(k)*fact(_m-k+1)));
     }
     return ((_m+1)*somme);
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////
 // SURFACES BSPLINES
 ///////////////////////////////////
@@ -30,7 +31,7 @@ double computeRiesenfeldCoeff(int _i, int _m, double _t)
 // kv : décalage selon V
 // u : temps selon U
 // v : temps selon V
-void computeBSplinePointSurface(mlVec3** _ctrl, int _mu, int _mv, int _ku, int _kv, double _u, double _v, mlVec3 _q)
+void computeBSplinePointSurface(mlVec3 _ctrl[MAX][MAX], int _mu, int _mv, int _ku, int _kv, double _u, double _v, mlVec3 _q)
 {
     double coefRu = 0;
     double coefRv = 0;
@@ -51,23 +52,24 @@ void computeBSplinePointSurface(mlVec3** _ctrl, int _mu, int _mv, int _ku, int _
 
 // size_u : nombre de U
 // size_v : nombre de V
-void computeBSplineSurface(mlVec3** _ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv)
+void computeBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv)
 {
-    int sz_u = _size_u - _mu;
-    int sz_v = _size_v - _mv;
     double u, v;
-    for (int kv = 0; kv < sz_v; kv++)
+    int nu = _size_u - _mu;
+    int nv = _size_v - _mv;
+    int n;
+    for (int kv = 0; kv < nv; kv++)
     {
-	  for (int ku = 0; ku < sz_u; ku++)
+	  for (int ku = 0; ku < nu; ku++)
 	  {
-		for (int j = kv*(_nBP+1); j < ((_nBP+1)*(kv+1)); j++)
+		n = ku*((_nBP+1)*(_nBP+1)) + kv*(nu*((_nBP+1)*(_nBP+1)));
+		for (int j = 0; j < (_nBP+1); j++)
 		{
-		    v = j/(double)(_nBP*(kv+1));
-		    for (int i = ku*(_nBP+1); i < ((_nBP+1)*(ku+1)); i++)
+		    v = (double) j / _nBP;
+		    for (int i = 0; i < (_nBP+1); i++)
 		    {
-			  u = i/(double)(_nBP*(ku+1));
-			  printf("i: %d , j: %d\n", i, j);
-			  computeBSplinePointSurface(_ctrl, _mu, _mv, ku, kv, u, v, _bP[i + j*((_nBP+1)*(kv+1))]);
+			  u = (double) i / _nBP;
+			  computeBSplinePointSurface(_ctrl, _mu, _mv, ku, kv, u, v, _bP[i + j*(_nBP+1) + n]);
 		    }
 		}
 	  }
@@ -75,43 +77,49 @@ void computeBSplineSurface(mlVec3** _ctrl, int _size_u, int _size_v, mlVec3 _bP[
 }
 
 
-void drawBSplineSurface(mlVec3** _ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv)
+void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv)
 {
     glDisable(GL_LIGHTING);
     computeBSplineSurface(_ctrl, _size_u, _size_v, _bP, _nBP, _mu, _mv);
-    int ku = _size_u - _mu;
-    int kv = _size_v - _mv;
-    glBegin(GL_QUADS);
-    glColor3f(0.0, 1.0, 0.0);
-
-    for (int j = 0; j < (_nBP)*kv; j++)
+    int nu = _size_u - _mu;
+    int nv = _size_v - _mv;
+    int n;
+    glLineWidth(2.0);
+    for (int kv = 0; kv < nv; kv++)
     {
-	  for (int i = 0; i < (_nBP)*ku; i++)
+	  for (int ku = 0; ku < nu; ku++)
 	  {
-		glVertex3dv(_bP[i + j*((_nBP+1)*kv)]);
-		glVertex3dv(_bP[i + (j+1)*((_nBP+1)*kv)]);
-		glVertex3dv(_bP[(i+1) + (j+1)*((_nBP+1)*kv)]);
-		glVertex3dv(_bP[(i+1) + j*((_nBP+1)*kv)]);
+		n = ku*((_nBP+1)*(_nBP+1)) + kv*(nu*((_nBP+1)*(_nBP+1)));
+		for (int j = 0; j < _nBP; j++)
+		{
+		    for (int i = 0; i < _nBP; i++)
+		    {
+			  glColor3f(0.0, 1.0, 0.0);
+			  glBegin(GL_QUADS);
+				glVertex3dv(_bP[i + j*(_nBP+1) + n]);
+				glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
+				glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
+				glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
+			  glEnd();
+
+			  glColor3f(0.0, 0.0, 0.0);
+			  glBegin(GL_LINE_LOOP);
+				glVertex3dv(_bP[i + j*(_nBP+1) + n]);
+				glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
+				glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
+				glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
+			  glEnd();
+		    }
+		}
 	  }
     }
-    glEnd();
-    drawBSplineControlPointsSurface(_ctrl, _size_u, _size_v);
+
+    glLineWidth(1.0);
     glEnable(GL_LIGHTING);
 }
 
-void drawBSplineControlPointsSurface(mlVec3 **_ctrl, int _size_u, int _size_v)
-{
-    glPointSize(5.0);
-    glColor3f(1.0, 0.0, 0.0);
-    glBegin(GL_POINTS);
-    for (int u = 0; u < _size_u; u++)
-	  for (int v = 0; v < _size_v; v++)
-		glVertex3dv(_ctrl[u][v]);
-    glEnd();
-    glPointSize(1.0);
-}
 
-
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////
 // COURBES BSPLINES
 //////////////////////////////////////////
@@ -159,7 +167,7 @@ void drawBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP,
 
     for (i = 0; i < (_nBP+1)*k; i++)
     {
-	  glVertex3f(_bP[i][0], _bP[i][1], _bP[i][2]);
+	  glVertex3dv(_bP[i]);
     }
     glEnd();
 }

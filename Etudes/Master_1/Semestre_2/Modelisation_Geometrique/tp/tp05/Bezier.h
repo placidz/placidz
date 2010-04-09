@@ -18,8 +18,7 @@ extern "C"
 }
 
 
-void drawBezierSurface(mlVec3 **_ctrl, int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP);
-void drawBezierControlPointsSurface(mlVec3 **_ctrl, int _size_u, int _size_v);
+void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP);
 
 void drawBezierCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP);
 
