@@ -174,7 +174,7 @@ int main(int _argc, char ** _argv)
 	glutInitWindowPosition(posX, posY);
 	
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
-	glutCreateWindow("[TP06] Modelisation Geometrique - Chargeur de maillages");
+	glutCreateWindow("[TP07] Modelisation Geometrique - Composantes connexes");
 	
 	glutDisplayFunc(displayGL);
 	glutReshapeFunc(reshapeGL);

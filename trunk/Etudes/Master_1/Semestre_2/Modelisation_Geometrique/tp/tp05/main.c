@@ -49,28 +49,28 @@ mlVec3 bP[MAX2];
 int degreBS = 3;
 
 bool bRenduBezier = 1;
-int ModeRendu = GL_LINE_LOOP;
+int drawMode = 2;
 
 Point3D barycentre;
 double barx, bary, barz;
 
 int AltCtrlShift_State;
-bool movePoint = 0;
-int du, dv;
+int movePoint = 0;
+int du = -1, dv = -1;
 
 
-bool trouverPoint(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _cx, double _cy, double _cz, double _ratioX, double _ratioY, int * _du, int * _dv)
+int trouverPoint(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _cx, double _cy, double _cz, double _ratioX, double _ratioY, int * _du, int * _dv)
 {
     int plan;
-    bool found = 0;
+    int found = 0;
     double e = 0.02;
     double eX = e * _ratioX;
     double eY = e * _ratioY;
     printf("eX: %f, eY: %f\n", eX, eY);
     //printf("cx: %f, cy: %f, cz: %f\n", _cx, _cy, _cz);
     if (_cz == INT_MAX) plan = 1;
-    else if (_cy == INT_MAX) plan = 2;
-    else if (_cx == INT_MAX) plan = 3;
+    if (_cy == INT_MAX) plan = 2;
+    if (_cx == INT_MAX) plan = 3;
     double px, py, pz;
     for (int j = 0; j < _size_v; j++)
     {
@@ -85,33 +85,36 @@ bool trouverPoint(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _cx, 
 		case 1: // Plan XY
 		    if ((_cx >= (px-eX) && _cx <= (px+eX)) && (_cy >= (py-eY) && _cy <= (py+eY)))
 		    {
+			  printf("Plan XY\n");
 			  *_du = i;
 			  *_dv = j;
-			  return 1;
+			  found = 1;
 		    }
 		    break;
 
 		case 2: // Plan XZ
 		    if ((_cx >= (px-eX) && _cx <= (px+eX)) && (_cz >= (pz-eY) && _cz <= (pz+eY)))
 		    {
+			  printf("Plan XZ\n");
 			  *_du = i;
 			  *_dv = j;
-			  return 1;
+			  found = 2;
 		    }
 		    break;
 
 		case 3: // Plan YZ
 		    if ((_cz >= (pz-eX) && _cz <= (pz+eX)) && (_cy >= (py-eY) && _cy <= (py+eY)))
 		    {
+			  printf("Plan YZ\n");
 			  *_du = i;
 			  *_dv = j;
-			  return 1;
+			  found = 3;
 		    }
 		    break;
 		}
 	  }
     }
-    return 0;
+    return found;
 }
 
 void drawControlPointsSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
@@ -122,7 +125,11 @@ void drawControlPointsSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
     glBegin(GL_POINTS);
     for (int u = 0; u < _size_u; u++)
 	  for (int v = 0; v < _size_v; v++)
+	  {
+		if (du == u && dv == v) glColor3f(1.0, 1.0, 0.0);
+		else glColor3f(1.0, 0.0, 0.0);
 		glVertex3dv(_ctrl[u][v]);
+	  }
     glEnd();
     glPointSize(1.0);
     glEnable(GL_LIGHTING);
@@ -164,8 +171,8 @@ void displayGL()
     glPushMatrix();
 	  glMultMatrixd(mlTbGetRotation());
 	  glCallList(idBaseDL);
-	  if (bRenduBezier) drawBezierSurface(PtsUV, size_u, size_v, bP, nBP);
-	  else if (size_u > degreBS && size_v > degreBS) drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS);
+	  if (bRenduBezier) drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
+	  else if (size_u > degreBS && size_v > degreBS) drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
 	  else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
 	  drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
@@ -243,11 +250,9 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		if (AltCtrlShift_State == GLUT_ACTIVE_CTRL) mlTbClick(_x,_y);
 
 		//Connaître dans quel coin de l'écran on clique
-		if (_x > winX/2 && _y < winY/2) // Coin haut droit
+		if (movePoint == 0 && _x > winX/2 && _y < winY/2) // Coin haut droit
 		{
-		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
-		    printf("vueOrtho: %d\n", vueOrtho);
-		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    printf("CLIC GAUCHE DANS PLAN HAUT-DROIT\n");
 		    _y = winY/2 - _y;
 		    int oriX, oriY;
 		    oriX = 3 * winX/4;
@@ -262,11 +267,9 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, y, (double)INT_MAX, vueOrtho, vueOrtho, &du, &dv);
 		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
 		}
-		else if (_x < winX/2 && _y > winY/2) // Coin bas gauche
+		else if (movePoint == 0 && _x < winX/2 && _y > winY/2) // Coin bas gauche
 		{
-		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
-		    printf("vueOrtho: %d\n", vueOrtho);
-		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    printf("CLIC GAUCHE DANS PLAN BAS-GAUCHE\n");
 		    _y = 3*winY/2 - _y;
 		    int oriX, oriY;
 		    oriX = winX/4;
@@ -279,13 +282,12 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		    y = y / unitScaleY;
 		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
 		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, (double)INT_MAX, y, vueOrtho, vueOrtho, &du, &dv);
+		    cout<<"movePoint: "<<movePoint<<endl;
 		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
 		}
-		else if (_x > winX/2 && _y > winY/2) // Coin bas droit
+		else if (movePoint == 0 && _x > winX/2 && _y > winY/2) // Coin bas droit
 		{
-		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
-		    printf("vueOrtho: %d\n", vueOrtho);
-		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    printf("CLIC GAUCHE DANS PLAN BAS-DROIT\n");
 		    _y = 3*winY/2 - _y;
 		    int oriX, oriY;
 		    oriX = 3 * winX/4;
@@ -336,9 +338,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 	  bRenduBezier = !bRenduBezier;
 	  break;
     case 'r':
-	  if (ModeRendu == GL_LINE_LOOP)
-		ModeRendu = GL_QUADS;
-	  else ModeRendu = GL_LINE_LOOP;
+	  drawMode = ++drawMode % 3;
+	  if (drawMode == 0) glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+	  else if (drawMode == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	  else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	  break;
 
     case 'p':
@@ -383,16 +386,18 @@ void motionGL(int _x, int _y)
 
     if (AltCtrlShift_State == GLUT_ACTIVE_CTRL) mlTbMotion(_x,_y);
 
+    printf("movePoint: %d\n", movePoint);
+
     //Connaître dans quel coin de l'écran on clique
-    if (_x > winX/2 && _y < winY/2) // Coin haut droit
+    if (movePoint == 1 && _x > winX/2 && _y < winY/2) // Coin haut droit
     {
-	  _y = winY/2 - _y;
+	  int ry = winY/2 - _y;
 	  int oriX, oriY;
 	  oriX = 3 * winX/4;
 	  oriY = winY/4;
 	  double x, y;
 	  x = _x - oriX;
-	  y = _y - oriY;
+	  y = ry - oriY;
 	  // Scale par rapport au zoom
 	  x = x / unitScaleX;
 	  y = y / unitScaleY;
@@ -402,8 +407,9 @@ void motionGL(int _x, int _y)
 		PtsUV[du][dv][0] = x;
 		PtsUV[du][dv][1] = y;
 	  }
+
     }
-    else if (_x < winX/2 && _y > winY/2) // Coin bas gauche
+    else if (movePoint == 2 && _x < winX/2 && _y > winY/2) // Coin bas gauche
     {
 	  _y = 3*winY/2 - _y;
 	  int oriX, oriY;
@@ -422,7 +428,7 @@ void motionGL(int _x, int _y)
 		PtsUV[du][dv][2] = y;
 	  }
     }
-    else if (_x > winX/2 && _y > winY/2) // Coin bas droit
+    else if (movePoint == 3 && _x > winX/2 && _y > winY/2) // Coin bas droit
     {
 	  _y = 3*winY/2 - _y;
 	  int oriX, oriY;
