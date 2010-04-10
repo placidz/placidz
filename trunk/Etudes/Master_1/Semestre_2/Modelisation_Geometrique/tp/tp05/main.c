@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <limits.h>
 
 #include "Bezier.h"
 #include "BSpline.h"
@@ -53,6 +54,65 @@ int ModeRendu = GL_LINE_LOOP;
 Point3D barycentre;
 double barx, bary, barz;
 
+int AltCtrlShift_State;
+bool movePoint = 0;
+int du, dv;
+
+
+bool trouverPoint(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _cx, double _cy, double _cz, double _ratioX, double _ratioY, int * _du, int * _dv)
+{
+    int plan;
+    bool found = 0;
+    double e = 0.02;
+    double eX = e * _ratioX;
+    double eY = e * _ratioY;
+    printf("eX: %f, eY: %f\n", eX, eY);
+    //printf("cx: %f, cy: %f, cz: %f\n", _cx, _cy, _cz);
+    if (_cz == INT_MAX) plan = 1;
+    else if (_cy == INT_MAX) plan = 2;
+    else if (_cx == INT_MAX) plan = 3;
+    double px, py, pz;
+    for (int j = 0; j < _size_v; j++)
+    {
+	  for(int i = 0; i < _size_u; i++)
+	  {
+		px = _ctrl[i][j][0];
+		py = _ctrl[i][j][1];
+		pz = _ctrl[i][j][2];
+		//printf("px: %f, py: %f, pz: %f\n", px, py, pz);
+		switch(plan)
+		{
+		case 1: // Plan XY
+		    if ((_cx >= (px-eX) && _cx <= (px+eX)) && (_cy >= (py-eY) && _cy <= (py+eY)))
+		    {
+			  *_du = i;
+			  *_dv = j;
+			  return 1;
+		    }
+		    break;
+
+		case 2: // Plan XZ
+		    if ((_cx >= (px-eX) && _cx <= (px+eX)) && (_cz >= (pz-eY) && _cz <= (pz+eY)))
+		    {
+			  *_du = i;
+			  *_dv = j;
+			  return 1;
+		    }
+		    break;
+
+		case 3: // Plan YZ
+		    if ((_cz >= (pz-eX) && _cz <= (pz+eX)) && (_cy >= (py-eY) && _cy <= (py+eY)))
+		    {
+			  *_du = i;
+			  *_dv = j;
+			  return 1;
+		    }
+		    break;
+		}
+	  }
+    }
+    return 0;
+}
 
 void drawControlPointsSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
 {
@@ -169,15 +229,83 @@ void reshapeGL(int _w, int _h)
 
 void mouseGL(int _button, int _state, int _x, int _y)
 {
+    double unitBaseX = winX / 4; // 200
+    double unitBaseY = winY / 4; // 150
+    double unitScaleX = unitBaseX / vueOrtho;
+    double unitScaleY = unitBaseY / vueOrtho;
+
     switch (_button)
     {
     case GLUT_LEFT_BUTTON:
 	  if (_state==GLUT_DOWN)
 	  {
-		mlTbClick(_x,_y);
+		AltCtrlShift_State = glutGetModifiers();
+		if (AltCtrlShift_State == GLUT_ACTIVE_CTRL) mlTbClick(_x,_y);
+
+		//Connaître dans quel coin de l'écran on clique
+		if (_x > winX/2 && _y < winY/2) // Coin haut droit
+		{
+		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
+		    printf("vueOrtho: %d\n", vueOrtho);
+		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    _y = winY/2 - _y;
+		    int oriX, oriY;
+		    oriX = 3 * winX/4;
+		    oriY = winY/4;
+		    double x, y;
+		    x = _x - oriX;
+		    y = _y - oriY;
+		    // Scale par rapport au zoom
+		    x = x / unitScaleX;
+		    y = y / unitScaleY;
+		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
+		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, y, (double)INT_MAX, vueOrtho, vueOrtho, &du, &dv);
+		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
+		}
+		else if (_x < winX/2 && _y > winY/2) // Coin bas gauche
+		{
+		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
+		    printf("vueOrtho: %d\n", vueOrtho);
+		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    _y = 3*winY/2 - _y;
+		    int oriX, oriY;
+		    oriX = winX/4;
+		    oriY = 3 * winY/4;
+		    double x, y;
+		    x = _x - oriX;
+		    y = _y - oriY;
+		    // Scale par rapport au zoom
+		    x = x / unitScaleX;
+		    y = y / unitScaleY;
+		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
+		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, (double)INT_MAX, y, vueOrtho, vueOrtho, &du, &dv);
+		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
+		}
+		else if (_x > winX/2 && _y > winY/2) // Coin bas droit
+		{
+		    printf("unitBaseX: %f, unitBaseY: %f\n", unitBaseX, unitBaseY);
+		    printf("vueOrtho: %d\n", vueOrtho);
+		    printf("unitScaleX: %f, unitScaleY: %f\n", unitScaleX, unitScaleY);
+		    _y = 3*winY/2 - _y;
+		    int oriX, oriY;
+		    oriX = 3 * winX/4;
+		    oriY = 3 * winY/4;
+		    double x, y;
+		    x = _x - oriX;
+		    y = _y - oriY;
+		    // Scale par rapport au zoom
+		    x = x / unitScaleX;
+		    y = y / unitScaleY;
+		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
+		    movePoint = trouverPoint(PtsUV, size_u, size_v, (double)INT_MAX, y, x, vueOrtho, vueOrtho, &du, &dv);
+		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
+		}
 	  }
 	  if (_state==GLUT_UP)
 	  {
+		movePoint = 0;
+		du = -1;
+		dv = -1;
 		/*mlTbRelease(_x,_y);*/
 	  }
 	  break ;
@@ -222,9 +350,11 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 
     case 'o':
 	  vueOrtho--;
+	  printf("VueOrtho: %d\n", vueOrtho);
 	  break;
     case 'l':
 	  vueOrtho++;
+	  printf("VueOrtho: %d\n", vueOrtho);
 	  break;
     }
     glutPostRedisplay();
@@ -233,13 +363,84 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 
 void keyboardSpecialGL(int _k, int _x, int _y)
 {
+    switch(_k)
+    {
+    case GLUT_KEY_UP:
+	  printf("JOURBONN LOLOL");
+	  break;
+    }
+
     glutPostRedisplay();
 }
 
 
 void motionGL(int _x, int _y)
 {
-    mlTbMotion(_x,_y);
+    double unitBaseX = winX / 4; // 200
+    double unitBaseY = winY / 4; // 150
+    double unitScaleX = unitBaseX / vueOrtho;
+    double unitScaleY = unitBaseY / vueOrtho;
+
+    if (AltCtrlShift_State == GLUT_ACTIVE_CTRL) mlTbMotion(_x,_y);
+
+    //Connaître dans quel coin de l'écran on clique
+    if (_x > winX/2 && _y < winY/2) // Coin haut droit
+    {
+	  _y = winY/2 - _y;
+	  int oriX, oriY;
+	  oriX = 3 * winX/4;
+	  oriY = winY/4;
+	  double x, y;
+	  x = _x - oriX;
+	  y = _y - oriY;
+	  // Scale par rapport au zoom
+	  x = x / unitScaleX;
+	  y = y / unitScaleY;
+
+	  if (movePoint)
+	  {
+		PtsUV[du][dv][0] = x;
+		PtsUV[du][dv][1] = y;
+	  }
+    }
+    else if (_x < winX/2 && _y > winY/2) // Coin bas gauche
+    {
+	  _y = 3*winY/2 - _y;
+	  int oriX, oriY;
+	  oriX = winX/4;
+	  oriY = 3 * winY/4;
+	  double x, y;
+	  x = _x - oriX;
+	  y = _y - oriY;
+	  // Scale par rapport au zoom
+	  x = x / unitScaleX;
+	  y = y / unitScaleY;
+
+	  if (movePoint)
+	  {
+		PtsUV[du][dv][0] = x;
+		PtsUV[du][dv][2] = y;
+	  }
+    }
+    else if (_x > winX/2 && _y > winY/2) // Coin bas droit
+    {
+	  _y = 3*winY/2 - _y;
+	  int oriX, oriY;
+	  oriX = 3 * winX/4;
+	  oriY = 3 * winY/4;
+	  double x, y;
+	  x = _x - oriX;
+	  y = _y - oriY;
+	  // Scale par rapport au zoom
+	  x = x / unitScaleX;
+	  y = y / unitScaleY;
+	  if (movePoint)
+	  {
+		PtsUV[du][dv][2] = x;
+		PtsUV[du][dv][1] = y;
+	  }
+    }
+
     glutPostRedisplay();
 }
 
@@ -252,7 +453,7 @@ void passiveMotionGL(int _x, int _y)
 void drawRepere()
 {
 	 glDisable(GL_LIGHTING);
-	glLineWidth(2.0);
+	glLineWidth(1.0);
 	// Axe X
 	glColor3f(1.0, 0.0, 0.0);
 	glBegin(GL_LINES);
@@ -391,7 +592,7 @@ int main(int _argc, char ** _argv)
     }
     vPts2.clear();
 
-    adjustToOrigin(PtsUV, size_u, size_v);
+    //adjustToOrigin(PtsUV, size_u, size_v);
 
     posX = (glutGet(GLUT_SCREEN_WIDTH ) - winX) / 2;
     posY = (glutGet(GLUT_SCREEN_HEIGHT) - winY) / 2;
