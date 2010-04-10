@@ -14,7 +14,7 @@ extern "C"
 #include "tools.h"
 
 
-void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv);
+void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv, int _mode);
 
 void drawBSplineCurve(mlVec3 _ctrl[MAX], int _nCtrl, mlVec3 _bP[MAX2], int _nBP, int _m);
 

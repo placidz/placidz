@@ -55,13 +55,13 @@ void computeBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVe
 }
 
 
-void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP)
+void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mode)
 {
     glDisable(GL_LIGHTING);
     computeTrianglePascal();
     computeBezierSurface(_ctrl, _size_u, _size_v, _bP, _nBP);
 
-    glLineWidth(2.0);
+    glLineWidth(1.0);
     for (int j = 0; j < _nBP; j++)
     {
 	  for (int i = 0; i < _nBP; i++)
@@ -74,13 +74,18 @@ void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 
 		    glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
 		glEnd();
 
-		glColor3f(0.0, 0.0, 0.0);
-		glBegin(GL_LINE_LOOP);
-		    glVertex3dv(_bP[i + j*(_nBP+1)]);
-		    glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
-		    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
-		    glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
-		glEnd();
+		if (_mode == 2)
+		{
+		    glLineWidth(2.0);
+		    glColor3f(0.0, 0.0, 0.0);
+		    glBegin(GL_LINE_LOOP);
+			  glVertex3dv(_bP[i + j*(_nBP+1)]);
+			  glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+			  glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+			  glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+		    glEnd();
+		    glLineWidth(1.0);
+		}
 	  }
     }
     glLineWidth(1.0);
