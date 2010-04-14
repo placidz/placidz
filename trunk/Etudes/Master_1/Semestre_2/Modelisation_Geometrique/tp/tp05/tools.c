@@ -125,3 +125,22 @@ vector<vector<Point3D> > loadFilePTS2(string _filename, int * _u, int * _v)
     printf("Fin de lecture de fichier.\n\n");
     return vecUV;
 }
+
+void saveFilePTS2(string _filename, mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
+{
+    FILE* fichier = NULL;
+    fichier = fopen(_filename.c_str(), "w");
+    if (fichier)
+    {
+	  fprintf(fichier, "# nb sommets u = %d\n", _size_u);
+	  fprintf(fichier, "# nb sommets v = %d\n", _size_v);
+	  for (int j = 0; j < _size_v; j++)
+	  {
+		for (int i = 0; i < _size_u; i++)
+		{
+		    fprintf(fichier, "v %f %f %f\n", _ctrl[i][j][0], _ctrl[i][j][1], _ctrl[i][j][2]);
+		}
+	  }
+    }
+    fclose(fichier);
+}
