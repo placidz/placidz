@@ -263,9 +263,7 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		    // Scale par rapport au zoom
 		    x = x / unitScaleX;
 		    y = y / unitScaleY;
-		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
 		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, y, (double)INT_MAX, vueOrtho, vueOrtho, &du, &dv);
-		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
 		}
 		else if (movePoint == 0 && _x < winX/2 && _y > winY/2) // Coin bas gauche
 		{
@@ -280,10 +278,7 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		    // Scale par rapport au zoom
 		    x = x / unitScaleX;
 		    y = y / unitScaleY;
-		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
 		    movePoint = trouverPoint(PtsUV, size_u, size_v, x, (double)INT_MAX, y, vueOrtho, vueOrtho, &du, &dv);
-		    cout<<"movePoint: "<<movePoint<<endl;
-		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
 		}
 		else if (movePoint == 0 && _x > winX/2 && _y > winY/2) // Coin bas droit
 		{
@@ -298,9 +293,7 @@ void mouseGL(int _button, int _state, int _x, int _y)
 		    // Scale par rapport au zoom
 		    x = x / unitScaleX;
 		    y = y / unitScaleY;
-		    std::cout<<"x: "<<x<<" y: "<<y<<std::endl;
 		    movePoint = trouverPoint(PtsUV, size_u, size_v, (double)INT_MAX, y, x, vueOrtho, vueOrtho, &du, &dv);
-		    if (movePoint) std::cout<<"du: "<<du<<" dv: "<<dv<<std::endl;
 		}
 	  }
 	  if (_state==GLUT_UP)
@@ -359,6 +352,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 	  vueOrtho++;
 	  printf("VueOrtho: %d\n", vueOrtho);
 	  break;
+
+    case 's':
+	  saveFilePTS2("save.pts2", PtsUV, size_u, size_v);
+	  break;
     }
     glutPostRedisplay();
 }
@@ -386,8 +383,6 @@ void motionGL(int _x, int _y)
 
     if (AltCtrlShift_State == GLUT_ACTIVE_CTRL) mlTbMotion(_x,_y);
 
-    printf("movePoint: %d\n", movePoint);
-
     //Connaître dans quel coin de l'écran on clique
     if (movePoint == 1 && _x > winX/2 && _y < winY/2) // Coin haut droit
     {
@@ -401,13 +396,11 @@ void motionGL(int _x, int _y)
 	  // Scale par rapport au zoom
 	  x = x / unitScaleX;
 	  y = y / unitScaleY;
-
 	  if (movePoint)
 	  {
 		PtsUV[du][dv][0] = x;
 		PtsUV[du][dv][1] = y;
 	  }
-
     }
     else if (movePoint == 2 && _x < winX/2 && _y > winY/2) // Coin bas gauche
     {
@@ -421,7 +414,6 @@ void motionGL(int _x, int _y)
 	  // Scale par rapport au zoom
 	  x = x / unitScaleX;
 	  y = y / unitScaleY;
-
 	  if (movePoint)
 	  {
 		PtsUV[du][dv][0] = x;

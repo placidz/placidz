@@ -10,6 +10,13 @@
 #include <string>
 #include <GL/glut.h>
 
+#include "defines.h"
+
+extern "C"
+{
+#include <ml.h>
+}
+
 typedef struct
 {
     double x, y, z;
@@ -22,6 +29,7 @@ void sortByDescOrder(int *t, int size);
 void displayText(float x, float y, float z, void* font, const char* s);
 std::vector<Point3D> loadFilePTS(std::string _filename);
 std::vector<std::vector<Point3D> > loadFilePTS2(std::string _filename, int * _u, int * _v);
+void saveFilePTS2(std::string _filename, mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v);
 
 
 template <class T>

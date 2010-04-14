@@ -49,7 +49,7 @@ DEPS		= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.d)
 # Compiler and flags
 # -------------------------------------------------------------------
 CC			= g++
-CFLAGS		= -ansi -pedantic -D_GNU_SOURCE -W -Wall -ggdb3
+CFLAGS		= -ansi -pedantic -D_GNU_SOURCE -W -Wall -Werror -ggdb3
 INCPATH		= -I. -I$(INCDIR) -I$(INCDIR)/$(PROJECT) -I$(GMTOOLS)/ml/inc -I$(GMTOOLS)/he/inc
 LIBPATH		= -L$(GMTOOLS)/ml/lib -L$(GMTOOLS)/he/lib
 LDFLAGS		= -lhe -lml -lm
