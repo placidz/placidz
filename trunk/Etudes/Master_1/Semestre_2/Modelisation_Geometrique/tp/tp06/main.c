@@ -44,6 +44,8 @@ bool bFaceEdgesDisplay = 0;
 bool bFacePolysDisplay = 0;
 bool bFacePlanDisplay = 0;
 
+bool bDetectBords = 0;
+
 mlVec3 zero = {0, 0, 0};
 
 
@@ -110,7 +112,18 @@ void meshDisplay(heMesh * _mesh)
 	  {
 		min++;
 	  }
-	  //printf("min: %d ", min);
+	  if (bDetectBords && min == 1)
+	  {
+		glDisable(GL_LIGHTING);
+		glLineWidth(3.0);
+		glColor3f(1.0, 1.0, 0.0);
+		glBegin(GL_LINES);
+		    glVertex3dv(_mesh->edges[i]->tail->pos);
+		    glVertex3dv(_mesh->edges[i]->head->pos);
+		glEnd();
+		glLineWidth(1.0);
+		glEnable(GL_LIGHTING);
+	  }
 	  if (min < openedMesh) openedMesh = min;
 	  min = 0;
     }
@@ -243,23 +256,34 @@ void meshDisplay(heMesh * _mesh)
 		{
 		    mlVec3_Copy(plan[i++], ((hePtrEdge)it->data)->head->pos);
 		}
-		mlVec3 v1, v2, normal, d;
+		mlVec3 v1, v2, rv1, rv2, d;
+		
 		mlVec3_SubVec(v1, plan[0], plan[1]);
 		mlVec3_SubVec(v2, plan[2], plan[1]);
-		mlVec3_Cross(normal, v1, v2);
-		bool estNul = mlVec3_IsEqual(normal, zero);
-		if (!estNul)
-		{
-		    mlVec3_AddVec(d, plan[0], v2);
 
-		    glColor3f(1.0, 1.0, 1.0);
-		    glBegin(GL_QUADS);
-			  glVertex3dv(plan[0]);
-			  glVertex3dv(plan[1]);
-			  glVertex3dv(plan[2]);
-			  glVertex3dv(d);
-		    glEnd();
-		}
+		mlVec3_AddVec(d, plan[0], v2); // placer le point d
+
+		mlVec3_Scale(v1, v1, 5); // coef d'agrandissement du plan
+		mlVec3_Scale(v2, v2, 5);
+		mlVec3_Neg(rv1, v1); // inverse des vecteurs
+		mlVec3_Neg(rv2, v2);
+
+		mlVec3_AddVec(plan[0], plan[0], rv1); // positionnement des points avec effet du scale
+		mlVec3_AddVec(plan[0], plan[0], rv2);
+		mlVec3_AddVec(plan[1], plan[1], rv1);
+		mlVec3_AddVec(plan[1], plan[1], v2);
+		mlVec3_AddVec(plan[2], plan[2], v1);
+		mlVec3_AddVec(plan[2], plan[2], v2);
+		mlVec3_AddVec(d, d, v1);
+		mlVec3_AddVec(d, d, rv2);
+
+		glColor3f(1.0, 1.0, 1.0);
+		glBegin(GL_QUADS);
+		    glVertex3dv(plan[0]);
+		    glVertex3dv(plan[1]);
+		    glVertex3dv(plan[2]);
+		    glVertex3dv(d);
+		glEnd();
 	  }
 	  glEnable(GL_LIGHTING);
     }
@@ -386,6 +410,9 @@ void keyboardGL(unsigned char _k, int _x, int _y)
     case 't':
 	  bFacePlanDisplay = !bFacePlanDisplay;
 	  break;
+
+    case 'x':
+	  bDetectBords = !bDetectBords;
 
     case 43:
 	  if (trackMode == 0 && idCurrVertex < mesh->nVerts) idCurrVertex++;
