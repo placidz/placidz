@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -21,6 +24,11 @@ extern "C"
 #include <he.h>
 }
 
+typedef struct{
+	float x;
+	float y;
+	float z;
+}Point3D;
 
 int winX = 800;
 int winY = 600;
@@ -34,85 +42,255 @@ int currVert;
 bool bEdgesDisplay = 0;
 bool bPolyDisplay = 0;
 
-void parcoursAretes(hePtrEdge arete, vector<int> &markFace){
+//vecteur pour enregistrer les donnees des coposantes connexes dans un fichier .obj
+vector<Point3D> lstVertex;
+vector<int> lstFaceTmp;
+vector<vector<int> > lstFace;
+int indiceDebut = 0, indiceFin = 0; 
+bool enregistrer = false;
+
+
+void ecrireObj(string nomFichier){
+    FILE* fichier = NULL;
+    fichier = fopen(nomFichier.c_str(), "w");
+    if (fichier)
+    {
+		for(int i = 0; i < (int)lstVertex.size(); i++)
+			fprintf(fichier, "v %f %f %f\n", lstVertex.at(i).x, lstVertex.at(i).y, lstVertex.at(i).z);
+			
+		for(int i = 0; i < (int)lstFace.size(); i++){
+			
+			for(int j = 0; j < (int)lstFace.at(i).size(); j++){
+				if(j == 0 && lstFace.at(i).at(j) <= (int)lstVertex.size())
+					fprintf(fichier, "f ");
+				fprintf(fichier, "%d ", lstFace.at(i).at(j));
+			}
+			fprintf(fichier, "\n");
+		}
+    }
+    fclose(fichier);
+}
+
+int getIndiceVertex(Point3D pt, vector<Point3D>liste){
+	int res = -1;
+	
+	for(int i = 0; i < (int)liste.size(); i++){
+			if(pt.x == liste.at(i).x && pt.y == liste.at(i).y && pt.z == liste.at(i).z)
+				res = i;
+	}
+	return res;
+}
+
+bool isOkRajouteFace(vector<int>lstFace, vector<vector<int> >liste){
+	bool res = true;
+	int test = 0;
+	
+	for(int i = 0; i < (int)liste.size(); i++){
+		for(int j = 0; j < (int)lstFace.size(); j++){
+			if((int)liste.at(i).size() == (int)lstFace.size())
+				if(liste.at(i).at(j) == lstFace.at(j))
+					test++;
+		}
+		if(test == (int)lstFace.size())
+			res = false;
+		test = 0;
+	}	
+	return res;
+}
+
+void parcoursEnregistrement(hePtrEdge arete, vector<int> &markFace){
 	hePtrListItem it, it2;
-	cout<<"TEST 3"<<endl;
+	Point3D Vetmp;
+	vector<int> indicesVertex;//possede l'indice des vertex deja enregistres, et -1 si le vertex n'es pas enregistre
+	
 	for (it = arete->faces.head; it != NULL; it = it->next){
 		//Si la face n'a pas ete marquee, on trace le polygone, et on appelle la fonction reccursivement pour chaque arrete de la face
 		if(markFace.at( ((hePtrFace)it->data)->id  )  == 0){
-			cout<<"Valeur de la face : "<<((hePtrFace)it->data)->id<<endl;
-			glBegin(GL_POLYGON);
+			
 			for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next){
-				glVertex3dv(((hePtrEdge)it2->data)->head->pos);
-				cout<<"TEST 4"<<endl;
+				Vetmp.x = ((hePtrEdge)it2->data)->head->pos[0];
+				Vetmp.y = ((hePtrEdge)it2->data)->head->pos[1];
+				Vetmp.z = ((hePtrEdge)it2->data)->head->pos[2];
+				indicesVertex.push_back(getIndiceVertex(Vetmp, lstVertex));
+				if(indicesVertex.at( (int)indicesVertex.size()-1 ) == -1)
+					lstVertex.push_back(Vetmp);
 			}
-			glEnd();
+						
+			for(int i = 0; i < (int)indicesVertex.size(); i++){
+				if(indicesVertex.at(i) != -1)
+					lstFaceTmp.push_back( indicesVertex.at(i)+1 );
+				
+				else{
+					lstFaceTmp.push_back( indiceDebut+1 );
+					indiceDebut++;
+				}
+			}
+			indiceDebut = lstVertex.size();
+			if(isOkRajouteFace(lstFaceTmp, lstFace))
+				lstFace.push_back(lstFaceTmp);
+			lstFaceTmp.clear();
+			indicesVertex.clear();
+			//markFace.at( ((hePtrFace)it->data)->id  ) = 1;	
+		}
+	}	
+	
+	for (it = arete->twin->faces.head; it != NULL; it = it->next){
+		//Si la face n'a pas ete marquee, on trace le polygone, et on appelle la fonction reccursivement pour chaque arrete de la face
+		if(markFace.at( ((hePtrFace)it->data)->id  )  == 0){
+			
+			for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next){
+				Vetmp.x = ((hePtrEdge)it2->data)->head->pos[0];
+				Vetmp.y = ((hePtrEdge)it2->data)->head->pos[1];
+				Vetmp.z = ((hePtrEdge)it2->data)->head->pos[2];
+				indicesVertex.push_back(getIndiceVertex(Vetmp, lstVertex));
+				if(indicesVertex.at( (int)indicesVertex.size()-1 ) == -1)
+					lstVertex.push_back(Vetmp);
+			}
+						
+			for(int i = 0; i < (int)indicesVertex.size(); i++){
+				if(indicesVertex.at(i) != -1)
+					lstFaceTmp.push_back( indicesVertex.at(i)+1 );
+				
+				else{
+					lstFaceTmp.push_back( indiceDebut+1 );
+					indiceDebut++;
+				}
+			}
+			indiceDebut = lstVertex.size();
+			if(isOkRajouteFace(lstFaceTmp, lstFace))
+				lstFace.push_back(lstFaceTmp);
+			lstFaceTmp.clear();
+			indicesVertex.clear();
 			
 			markFace.at( ((hePtrFace)it->data)->id  ) = 1;
 			for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next){
-				cout<<"TEST 5"<<endl;
-				parcoursAretes(((hePtrEdge)it2->data), markFace);
-				cout<<"TEST 6"<<endl;
+				parcoursEnregistrement(((hePtrEdge)it2->data), markFace);
 			}
 				
 		}
-		else{
-			//cout<<"On saute la face n : "<< ((hePtrFace)it->data)->id<<endl;
+	}	
+}
+
+void parcoursAretes(hePtrEdge arete, vector<int> &markFace){
+	hePtrListItem it, it2;
+	int Indicetmp;
+	Point3D Vetmp;
+	vector<int> indicesVertex;//possede l'indice des vertex deja enregistres, et -1 si le vertex n'es pas enregistre
+	
+	for (it = arete->twin->faces.head; it != NULL; it = it->next){
+		//Si la face n'a pas ete marquee, on trace le polygone, et on appelle la fonction reccursivement pour chaque arrete de la face
+		if(markFace.at( ((hePtrFace)it->data)->id  )  == 0){
+			
+			glBegin(GL_POLYGON);
+			for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next){
+				glNormal3dv(((hePtrEdge)it2->data)->head->normal);
+				glVertex3dv(((hePtrEdge)it2->data)->head->pos);
+			}
+			glEnd();
+			markFace.at( ((hePtrFace)it->data)->id  ) = 1;
+			for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next){
+				parcoursAretes(((hePtrEdge)it2->data), markFace);
+			}
+				
 		}
 	}
 }
 
+void setColor(int num){
+	switch (num){
+		case 1:glColor3f(1.0, 1.0, 0.0);break;
+		case 2:glColor3f(1.0, 0.0, 0.0);break;
+		case 3:glColor3f(0.0, 1.0, 0.0);break;	
+		case 4:glColor3f(0.3, 0.5, 1.0);break;
+		case 5:glColor3f(1.0, 1.0, 0.0);break;
+		case 6:glColor3f(1.0, 0.0, 1.0);break;
+		case 7:glColor3f(0.0, 1.0, 1.0);break;
+		case 8:glColor3f(1.0, 1.0, 1.0);break;
+	}
+}
+
+void SauvegardeConnectedComponents(heMesh * _mesh)
+{
+        int nCC = 0;
+        bool nvleComposante = false;
+        hePtrListItem it, it2;
+        heVert * v = NULL;
+        bool fstPassage;
+        vector<int> marqueFace(_mesh->nFaces, 0);//initialise le tableau qui servira a marquer les faces
+        Point3D Vetmp;
+		vector<int> indicesVertex;
+        
+        string nomFichier = "ComposanteN";
+        string nomTmp;
+        
+        
+        //Parcours de toutes les faces du mesh - Traitement des composantes connexes.
+        for(int i = 0; i < _mesh->nFaces; ++i)
+        {
+			fstPassage = true;
+			for(it = _mesh->faces[i]->edges.head; it != NULL; it = it->next)
+			{
+				
+				//Si la face n'est pas encore tracee, on lance la fonction
+				if(marqueFace.at(_mesh->faces[i]->id) == 0){
+					//cout<<"Valeur de la face numero : "<< _mesh->faces[i]->id <<" = "<<marqueFace.at(_mesh->faces[i]->id)<<endl;
+					if(fstPassage == true){
+						if(nCC != 0){
+							ecrireObj(nomTmp);
+							lstVertex.clear();
+							lstFace.clear();
+						}
+						std::ostringstream oss;
+						nCC++;
+						oss << nCC;
+						fstPassage = false;
+						setColor(nCC);//attribue une couleur selon la valeur de nCC
+						nomTmp =  nomFichier + oss.str() + ".obj";//Genere un nom de fichier pour chaque composante
+						cout<<nomTmp<<endl;
+					}
+					//Parcours et marque toutes les faces ratachees a la face en cours
+					parcoursEnregistrement((hePtrEdge)it->data, marqueFace);	
+				}
+			}
+			 
+        }
+		ecrireObj(nomTmp);
+}
 
 int countConnectedComponents(heMesh * _mesh)
 {
         int nCC = 0;
         bool nvleComposante = false;
-        
         hePtrListItem it;
         heVert * v = NULL;
-        vector<int> marqueFace(_mesh->nFaces, 0);//initialise le tableau qui servira a marquer les faces
-        cout<<"Total de faces : "<<(int)marqueFace.size()<<endl;
+        bool fstPassage;
+        vector<int> marqueFace(_mesh->nFaces, 0);//initialise le tableau qui servira a marquer les faces        
         
         //Parcours de toutes les faces du mesh - Traitement des composantes connexes.
         for(int i = 0; i < _mesh->nFaces; ++i)
         {
-			cout<<"TEST 0"<<endl;
+			fstPassage = true;
 			for(it = _mesh->faces[i]->edges.head; it != NULL; it = it->next)
 			{
 				
 				//Si la face n'est pas encore tracee, on lance la fonction
-				if(marqueFace.at(((hePtrFace)it->data)->id) == 0){
-					cout<<"TEST 1"<<endl;
+				if(marqueFace.at(_mesh->faces[i]->id) == 0){
+					//cout<<"Valeur de la face numero : "<< _mesh->faces[i]->id <<" = "<<marqueFace.at(_mesh->faces[i]->id)<<endl;
+					if(fstPassage == true){
+						nCC++;
+						fstPassage = false;
+						setColor(nCC);//attribue une couleur selon la valeur de nCC
+					}
+					//Parcours et marque toutes les faces ratachees a la face en cours
 					parcoursAretes((hePtrEdge)it->data, marqueFace);
-					cout<<"TEST 2"<<endl;
+						
+						
 				}
-				else{
-					nvleComposante = true;
-					
-				}
-				cout<<"TEST 8"<<endl;
 			}
-				
-			cout<<"TEST 9"<<endl;
-			if(nvleComposante == true){
-				nCC++;
-				nvleComposante = false;
-				cout<<"TEST DE DEBUG"<<endl;
-			}
-			cout<<"TEST 10"<<endl;
+			 
         }
-        /*
-        for (it = currEdge->faces.head; it != NULL; it = it->next)
-		{
-			if(markFace.at( ((hePtrFace)it->data)->id  )  == 0){
-				for (it2 = ((hePtrFace)it->data)->edges.head; it2 != NULL; it2 = it2->next)
-				{
-					parcoursAretes((hePtrEdge)it2, marqueFace);
-				}
-		}
-		* */
         
-        cout<<"TEST DU NOMBRE DE COMPOSANTES : "<<nCC<<endl;
+        cout<<"NOMBRE DE COMPOSANTES : "<<nCC<<endl;
         return nCC;
 }
 
@@ -285,6 +463,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
                 case 'p':
                         bPolyDisplay = !bPolyDisplay;
                 break;
+					
+                 case 'e':
+                        SauvegardeConnectedComponents(mesh);
+                break;
                
                 case 43:
                 if (currVert < mesh->nVerts)
@@ -329,7 +511,7 @@ void motionGL(int _x, int _y)
 
 void passiveMotionGL(int _x, int _y)
 {
-        glutPostRedisplay();
+        //glutPostRedisplay();
 }
 
 
