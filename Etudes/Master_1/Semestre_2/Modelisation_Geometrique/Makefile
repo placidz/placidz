@@ -26,41 +26,27 @@
 
 # -------------------------------------------------------------------
 # Directories
-SUBDIRS  = gmtools tp
 # -------------------------------------------------------------------
-
-# -------------------------------------------------------------------
-# Binaries
-ECHO	= /bin/echo
-CD		= cd
-ZIP		= zip
-FIND	= find
+DIRS		= gmtools tp
 # -------------------------------------------------------------------
 
 
 # -------------------------------------------------------------------
 # Rules
+# -------------------------------------------------------------------
+all clean:
+	@for d in $(DIRS); do \
+	echo "~ Making $@ in '$$d'"; \
+	(cd $$d > /dev/null; $(MAKE) $@); \
+	done
 
-all:
-	@for d in $(SUBDIRS); do \
-	$(ECHO) "~ Making all in '$$d'"; \
-	($(CD) $$d > /dev/null && $(MAKE) all); done
-
-clean :
-	@for d in $(INSTALLS) $(SUBDIRS); do \
-	$(ECHO) "~ Making clean in '$$d'"; \
-	($(CD) $$d > /dev/null && $(MAKE) clean); done
-
-clean-all :
-	@for d in $(INSTALLS) $(SUBDIRS); do \
-	$(ECHO) "~ Making clean-all in '$$d'"; \
-	($(CD) $$d > /dev/null && $(MAKE) clean-all); done
 
 arch :
-	@$(ECHO) "~ Archiving the directory"
-	@$(ZIP) -rq "$(PWD)"-`date +%Y%m%d-%H%M`.zip .
+	@echo "~ Archiving the directory"
+	@zip -rq "$(PWD)"-`date +%Y%m%d-%H%M`.zip .
+
 
 touch :
-	@$(ECHO) "~ Touching all files"
-	@$(FIND) . -iname "*" -exec touch {} \;
+	@echo "~ Touching all files"
+	@find . -iname "*" -exec touch {} \;
 # -------------------------------------------------------------------
