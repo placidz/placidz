@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-//#include "glut.h"
-#include <GL/glut.h>
+#include "glut.h"
+//#include <GL/glut.h>
 
 #include "Polygone.h"
 
@@ -182,8 +182,42 @@ void clavier (unsigned char key, int x, int y)
 		break;
 
 		case 'i':
-			ptsInter = lPoly.at(0).intersection(lPoly.at(1));
-			
+			ptsInter = lPoly.at(0).intersection(lPoly.at(1));			
+		break;
+
+		case 'U':{
+			Polygone ptmp;
+			ptmp.UNIONPoly(lPoly.at(0), lPoly.at(1));
+			lPoly.clear();
+			lPoly.push_back(ptmp);
+				 }
+		break;
+
+		case 'I':{
+			Polygone polyTmp, pTrou;
+			polyTmp.INTERSECTIONPoly(lPoly.at(0), lPoly.at(1));
+			lPoly.clear();
+			for(int i = 0; i < (int)polyTmp.TROUS.size(); i++){
+				pTrou.PTS = polyTmp.TROUS.at(i).PTS;
+				lPoly.push_back(pTrou);
+			}
+			polyTmp.TROUS.clear();
+			lPoly.push_back(polyTmp);
+				 }
+		break;
+
+		case 'D':{
+			Polygone polyTmp, pTrou;
+			polyTmp.DIFFERENCEPoly(lPoly.at(0), lPoly.at(1));
+			lPoly.clear();
+			if((int)polyTmp.TROUS.size() > 1)
+			for(int i = 0; i < (int)polyTmp.TROUS.size(); i++){
+				pTrou.PTS = polyTmp.TROUS.at(i).PTS;
+				lPoly.push_back(pTrou);
+			}
+			polyTmp.TROUS.clear();
+			lPoly.push_back(polyTmp);
+				 }
 		break;
 	}
 	glutPostRedisplay();	
@@ -280,7 +314,6 @@ void souris (int button, int state, int x, int y)
 	}
 	glutPostRedisplay();
 }
-
 
 void motionGL(int _x, int _y)
 {
