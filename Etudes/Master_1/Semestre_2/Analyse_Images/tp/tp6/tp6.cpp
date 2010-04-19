@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <GL/glut.h>
 #include <math.h>
 #include "OutilsPGM.h"
@@ -16,19 +17,40 @@ typedef struct
 	double *data;
 } ImageD;
 
-Filtre flt_moyen;
-Filtre flt_median;
-Filtre flt_nagao;
-
 int f1, f2;
 Image Im1, Im2;		// Images originales
 GLubyte *I1=NULL, *I2=NULL;		// Image à afficher
 
+short ValMiror(Image *d, int x, int y)
+{
+	if(x < 0) x = -x - 1;
+	if(x >= d->width) x = d->width - (x - d->width) - 1;
+	if(y < 0) y = -y - 1;
+	if(y >= d->height) y = d->height - (y - d->height ) - 1;
+	  
+	return d->data[x + y*d->width];
+}
+
+double ValMirorD(ImageD *d, int x, int y)
+{
+	if(x < 0) x = -x - 1;
+	if(x >= d->width) x = d->width - (x - d->width) - 1;
+	if(y < 0) y = -y - 1;
+	if(y >= d->height) y = d->height - (y - d->height ) - 1;
+	  
+	return d->data[x + y*d->width];
+}
 
 void ModifierPixel(Image *d, int x, int y, short valeur)
 {
 	if(x>=0 && y>=0 && x<d->width && y<d->height)
-		d->data[y*d->width+x]=valeur;
+		d->data[x + y*d->width]=valeur;
+}
+
+void ModifierPixelD(ImageD *d, int x, int y, double valeur)
+{
+	if(x>=0 && y>=0 && x<d->width && y<d->height)
+		d->data[x + y*d->width]=valeur;
 }
 
 void CopierImage(Image *s, Image *d)
@@ -37,6 +59,14 @@ void CopierImage(Image *s, Image *d)
 	for (yi = 0; yi < s->height; yi++)
 		for (xi = 0; xi < s->width; xi++)
 			ModifierPixel(d, xi, yi, s->data[yi*s->width+xi]);
+}
+
+void CopierImageD(ImageD *s, ImageD *d)
+{
+	int x, y;
+	for (y = 0; y < s->height; y++)
+		for (x = 0; x < s->width; x++)
+			ModifierPixelD(d, x, y, ValMirorD(s, x, y));
 }
 
 void BasculeImage(const Image *image, GLubyte *I)
@@ -48,16 +78,6 @@ void BasculeImage(const Image *image, GLubyte *I)
 	return;
 }
 
-short ValMiror(Image *d, int x, int y)
-{
-	if(x < 0) x = -x - 1;
-	if(x >= d->width) x = d->width - (x - d->width) - 1;
-	if(y < 0) y = -y - 1;
-	if(y >= d->height) y = d->height - (y - d->height ) - 1;
-	  
-	return d->data[y*d->width+x];
-}
-
 double Distance(ImageD *im1, ImageD *im2)
 {
 	int i, j;
@@ -65,9 +85,9 @@ double Distance(ImageD *im1, ImageD *im2)
 	for (i=0; i<im1->width; i++)
 		for (j=0; j<im1->height; j++)
 		{
-			somme += pow((im1->data[i+im1->height*j] - im2->data[i+im2->height*j]), 2);
+			somme += pow(ValMirorD(im1, i, j) - ValMirorD(im2, i, j), 2.);
 		}
-	return (sqrt(somme));
+	return (sqrt(somme)/((float)(im1->size)));
 }
 
 void Laplacien(ImageD *im1, ImageD *im2)
@@ -76,11 +96,11 @@ void Laplacien(ImageD *im1, ImageD *im2)
 	for (i=0; i<im1->width; i++)
 		for (j=0; j<im1->height; j++)
 		{
-			im2->data[i+j*im1->height] = im1->data[(i-1)+j*im1->height] 
-										+ im1->data[(i+1)+j*im1->height] 
-										+ im1->data[(i)+(j-1)*im1->height] 
-										+ im1->data[(i)+(j+1)*im1->height] 
-										- 4*im1->data[(i)+(j)*im1->height];
+			im2->data[i+j*im2->width] = ValMirorD(im1, i-1, j)
+										+ ValMirorD(im1, i+1, j)
+										+ ValMirorD(im1, i, j-1)
+										+ ValMirorD(im1, i, j+1)
+										- 4*ValMirorD(im1, i, j);
 		}
 }
 
@@ -88,8 +108,8 @@ void ExpansionDynamique(Image *ori, ImageD *in, Image *out)
 {
 	int i, j;
 	int width = in->width, height = in->height;
-	int maxi1 = -10000000, mini1 = 10000000;
-	int maxi2 = -10000000, mini2 = 10000000;
+	double maxi1 = -10000000, mini1 = 10000000;
+	double maxi2 = -10000000, mini2 = 10000000;
 	for (j=0; j< height; j++)
 		for (i = 0; i < width; i++)
 		{
@@ -99,13 +119,13 @@ void ExpansionDynamique(Image *ori, ImageD *in, Image *out)
 	for (j=0; j< height; j++)
 		for (i = 0; i < width; i++)
 		{
-			if (in->data[j*height+i] < mini1) mini1 = (int)in->data[j*height+i];
-			if (in->data[j*height+i] > maxi1) maxi1 = (int)in->data[j*height+i];
+			if (in->data[j*height+i] < mini1) mini1 = (double)in->data[j*height+i];
+			if (in->data[j*height+i] > maxi1) maxi1 = (double)in->data[j*height+i];
 		}
 	short a, b;
 	
-	a = (maxi2-mini2)/(maxi1-mini1);
-	b = (-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
+	a = (short)(maxi2-mini2)/(maxi1-mini1);
+	b = (short)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
 	out->size = in->size;
 	for (i = 0; i < out->size; i++)
 		{
@@ -124,18 +144,16 @@ void Tikhonov(Image *dep, Image *res, double dt, double lam)
 	U1.width = U2.width = lap.width = width;
 	U1.height = U2.height = lap.height = height;
 	U1.size = U2.size = lap.size = size;
-	
+	std::cout<<"U1.size:"<<U1.size<<"   size:"<<size<<std::endl;
 	U1.data = new double[size];
 	U2.data = new double[size];
 	lap.data = new double[size];
 	temp.data = new double[size];
 	
-	
-	
 	for (j=0; j<height; j++)
 		for (i = 0; i < width; i++)
 		{
-			U1.data[j*height+i] = (double)(ValMiror(dep, i, j));
+			ModifierPixelD(&U1, i, j, (double)(ValMiror(dep, i, j)));
 		}
 	while (dist > 0.05)
 	{
@@ -143,19 +161,16 @@ void Tikhonov(Image *dep, Image *res, double dt, double lam)
 		for (i=0; i<width; i++)
 			for (j=0; j<height; j++)
 			{
-				U2.data[i+j*height] = U1.data[i+j*height] + dt * ((double)ValMiror(dep, i, j) - U1.data[j+i*height] + lam * lap.data[i+j*height]);
+				U2.data[i+j*width] = ValMirorD(&U1, i, j) + dt * ((double)ValMiror(dep, i, j) - ValMirorD(&U1, i, j) + lam * ValMirorD(&lap, i, j));
 			}
 		dist = Distance(&U1, &U2);
-		for (j=0; j<height; j++)
-			for (i = 0; i < width; i++)
-			{
-				U1.data[j*height+i] = (double)(U2.data[j*height+i]);
-			}
+		printf("distance: %f\n", dist);
+		CopierImageD(&U2, &U1);
 	}
 	for (j=0; j<height; j++)
 		for (i = 0; i < width; i++)
 		{
-			temp.data[j*height+i] = (short)(U2.data[j*height+i]);
+			temp.data[i+j*width] = (short)(U2.data[i+j*width]);
 		}
 	ExpansionDynamique(dep, &temp, res);
 }
@@ -194,7 +209,7 @@ void ChoixMenuPrincipal(int value)
 	switch (value)
 	{
 		case 1:
-			Tikhonov(&Im1, &Im2, 0.2, 2);
+			Tikhonov(&Im1, &Im2, 0.18, 1.2);
 			BasculeImage(&Im2, I2);
 		break;
 		
@@ -238,18 +253,6 @@ void CreerMenu(void)
 int main(int argc,char **argv)
 {
 	glutInit(&argc,argv);
-	
-	flt_moyen.taille = 3;
-	flt_moyen.coef[flt_moyen.taille*flt_moyen.taille];
-	
-	//flt_moyen.coef = malloc(sizeof(double)*flt_moyen.taille*flt_moyen.taille);
-	//flt_median.coef = malloc(sizeof(double)*flt_moyen.taille*flt_moyen.taille);
-	
-	for (int i = 0; i < 9; i++)
-	{
-		flt_moyen.coef[i] = 1.0 / 9;
-		printf("%f \n", flt_moyen.coef[i]);
-	}
 	
 	if (LireImage("lena.pgm",&Im1)==-1) return -1;
 	
