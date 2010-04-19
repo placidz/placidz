@@ -640,8 +640,8 @@ void Polygone::UNIONPoly(Polygone p1, Polygone p2){
 	vector<int>marqueurP1;
 	vector<int>marqueurP2;
 	vector<Point2D> res;
-	vector<vector<Point2D>> lstRes;
-	vector<vector<Point2D>> lstTmp;
+	vector<vector<Point2D> > lstRes;
+	vector<vector<Point2D> > lstTmp;
 
 	bool mark1 = false, mark2 = false;
 	int cptMark, test = 0;
@@ -848,7 +848,7 @@ Point2D Polygone::parcoursPolygone(Point2D ptAnalyse, Polygone p1, Polygone p2, 
 }
 
 //Determine quels polygones sont a l'interieur des autres -> permet de recuperer le poly et ses trous
-void Polygone::determinePolyTrou(vector<vector<Point2D>> liste){
+void Polygone::determinePolyTrou(vector<vector<Point2D> > liste){
 	vector<Point2D> ptsPoly;
 	Polygone futurTrou;
 	int cpt, indicePoly = 0;
@@ -894,7 +894,7 @@ void Polygone::INTERSECTIONPoly(Polygone p1, Polygone p2){
 	vector<int>marqueurP1;
 	vector<int>marqueurP2;
 	vector<Point2D> res;
-	vector<vector<Point2D>> lstRes;
+	vector<vector<Point2D> > lstRes;
 
 	bool mark1 = false, mark2 = false;
 	int cptMark, test = 0;
@@ -1032,14 +1032,14 @@ void Polygone::INTERSECTIONPoly(Polygone p1, Polygone p2){
 
 
 //On envoie en parametre le trou du poly1 et le poly2 afin de determiner la nouvelle forme du trou en question
-vector<vector<Point2D>> Polygone::UNIONTrou(Polygone p1, Polygone p2){
+vector<vector<Point2D> > Polygone::UNIONTrou(Polygone p1, Polygone p2){
 	//verifier qu'un poly ne contient pas l'autre entierement
 	Point2D ptSuivant;
 	bool finirParcours = false;
 	vector<int>marqueurP1;
 	vector<int>marqueurP2;
 	vector<Point2D> res;
-	vector<vector<Point2D>> lstRes;
+	vector<vector<Point2D> > lstRes;
 
 	bool mark1 = false, mark2 = false;
 	int cptMark, test = 0, cptPtSuivant = 0;
@@ -1172,8 +1172,8 @@ void Polygone::DIFFERENCEPoly(Polygone p1, Polygone p2){
 	vector<int>marqueurP1;
 	vector<int>marqueurP2;
 	vector<Point2D> res;
-	vector<vector<Point2D>> lstRes;
-	vector<vector<Point2D>> lstTmp;
+	vector<vector<Point2D> > lstRes;
+	vector<vector<Point2D> > lstTmp;
 
 	bool mark1 = false, mark2 = false;
 	int cptMark, test = 0, cptPtSuivant = 0;
@@ -1312,15 +1312,15 @@ cout<<endl<<endl<<endl;
 
 
 //p1 correspond au trou, p2 au polygone
-vector<vector<Point2D>> Polygone::INTERTrou(Polygone p1, Polygone p2){
+vector<vector<Point2D> > Polygone::INTERTrou(Polygone p1, Polygone p2){
 		//verifier qu'un poly ne contient pas l'autre entierement
 	Point2D ptSuivant;
 	bool finirParcours = false;
 	vector<int>marqueurP1;
 	vector<int>marqueurP2;
 	vector<Point2D> res;
-	vector<vector<Point2D>> lstRes;
-	vector<vector<Point2D>> lstTmp;
+	vector<vector<Point2D> > lstRes;
+	vector<vector<Point2D> > lstTmp;
 
 	bool mark1 = false, mark2 = false;
 	int cptMark, dansP1 = 0, dansP2 = 0, cptPtSuivant = 0;

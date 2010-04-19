@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include "glut.h"
-//#include <GL/glut.h>
+//#include "glut.h"
+#include <GL/glut.h>
 
 #include "Polygone.h"
 

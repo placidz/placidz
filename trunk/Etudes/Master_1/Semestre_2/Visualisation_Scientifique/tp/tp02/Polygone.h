@@ -6,8 +6,8 @@
 #include <algorithm>
 #include <math.h>
 #include <string>
-#include "glut.h"
-//#include <GL/glut.h>
+//#include "glut.h"
+#include <GL/glut.h>
 #include "Point2D.h"
 
 using namespace std;
@@ -45,12 +45,12 @@ public:
 	int determineSensIntersection(int pos, Polygone p1, vector<int> mark);
 	int determineIndicePtSuivant(int pos, int sensParcours, int tailleListe);
 	void UNIONPoly(Polygone p1, Polygone p2);
-	vector<vector<Point2D>> UNIONTrou(Polygone p1, Polygone p2);
+	vector<vector<Point2D> > UNIONTrou(Polygone p1, Polygone p2);
 	void INTERSECTIONPoly(Polygone p1, Polygone p2);
-	vector<vector<Point2D>> INTERTrou(Polygone p1, Polygone p2);
+	vector<vector<Point2D> > INTERTrou(Polygone p1, Polygone p2);
 	void DIFFERENCEPoly(Polygone p1, Polygone p2);
 	Point2D parcoursPolygone(Point2D ptAnalyse, Polygone p1, Polygone p2, vector<int>& lstMark, vector<Point2D>& listePts, string typeOp);
-	void determinePolyTrou(vector<vector<Point2D>> liste);
+	void determinePolyTrou(vector<vector<Point2D> > liste);
 	void unionRecupereTrous(vector<Polygone> trouP1, vector<Polygone>trouP2);
 
 	void vider(void);
