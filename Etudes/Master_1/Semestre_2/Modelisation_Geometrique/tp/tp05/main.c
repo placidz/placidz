@@ -5,6 +5,7 @@
 #include <string>
 #include <limits.h>
 
+#include "OutilsPGM.h"
 #include "Bezier.h"
 #include "BSpline.h"
 #include "tools.h"
@@ -30,18 +31,21 @@ extern "C"
 
 using namespace std;
 
+string modeLoad;
 string filename;
-GLuint idBaseDL = 0;
 
 int winX = 800;
 int winY = 600;
+
+GLuint idBaseDL = 0;
+
+Image texture;
 
 int size_u = 0, size_v = 0;
 
 float zoom = 10.0;
 int vueOrtho = 15;
 
-//mlVec3** PtsUV;
 mlVec3 PtsUV[MAX][MAX];
 int nBP = 20;
 mlVec3 bP[MAX2];
@@ -331,7 +335,8 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 	  bRenduBezier = !bRenduBezier;
 	  break;
     case 'r':
-	  drawMode = ++drawMode % 3;
+	  drawMode++;
+	  drawMode = drawMode % 3;
 	  if (drawMode == 0) glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 	  else if (drawMode == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	  else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -573,22 +578,31 @@ int main(int _argc, char ** _argv)
 
     glutInit(&_argc, _argv);
 
-    filename = _argv[1];
+    modeLoad = _argv[1];
+    filename = _argv[2];
 
-    vector<vector<Point3D> > vPts2;
-    vPts2 = loadFilePTS2(filename, &size_u, &size_v);
+    vector<vector<Point3D> > vPts;
 
-    //PtsUV = T_Array2D<mlVec3>(size_u, size_v);
+    if (modeLoad == "-pts")
+    {
+	  vPts = loadFilePTS2(filename, &size_u, &size_v);
+	  //PtsUV = T_Array2D<mlVec3>(size_u, size_v);
+    }
+    else if (modeLoad == "-img")
+    {
+	  if (LireImage("hm.pgm", &texture) == -1) return -1;
 
+    }
+
+    // Recopie dans tableau 2D
     for (int v=0; v<size_v; v++)
     {
 	  for (int u=0; u<size_u; u++)
 	  {
-		//printf("x: %f, y: %f, z: %f \n", vPts2[v][u].x, vPts2[v][u].y, vPts2[v][u].z);
-		mlVec3_Set(PtsUV[u][v], vPts2[v][u].x, vPts2[v][u].y, vPts2[v][u].z);
+		mlVec3_Set(PtsUV[u][v], vPts[v][u].x, vPts[v][u].y, vPts[v][u].z);
 	  }
     }
-    vPts2.clear();
+    vPts.clear();
 
     //adjustToOrigin(PtsUV, size_u, size_v);
 

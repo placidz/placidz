@@ -2,6 +2,9 @@
 #include <stdio.h>
 #include <vector>
 #include <math.h>
+#include <algorithm>
+#include <iostream>
+
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -20,11 +23,13 @@ extern "C"
     //#include <he.h>
 }
 
+using namespace std;
+
 typedef struct
 {
-    hePtrEdge edge;
+    hePtrEdge ptrEdge;
     double length;
-} Arete;
+} EdgeLength;
 
 
 int winX = 800;
@@ -32,18 +37,33 @@ int winY = 600;
 
 int mouseClick[] = {0, 0, 0};
 
-hePtrMesh mesh;
+hePtrMesh mesh, simpleMesh;
 hePtrEdge currEdge;
 int idCurrEdge = 0;
 
-std::vector<Arete> lstAretes;
-double epsilon;
+bool OriginalDisplay = 1;
+
+std::vector<EdgeLength> lstAretes;
+
+double epsilon = 0.0001;
+double average = 0.0;
 
 
 double getMin(double _a, double _b)
 {
     if (_a <= _b) return _a;
     else return _b;
+}
+
+bool sortLength(EdgeLength _a, EdgeLength _b)
+{
+    return (_a.length < _b.length);
+}
+
+
+void getEdgeMiddle(hePtrEdge _edge, mlVec3 _middle)
+{
+    mlVec3_Set(_middle, ((_edge->tail->pos[0] + _edge->head->pos[0]) / 2.0), ((_edge->tail->pos[1] + _edge->head->pos[1]) / 2.0), ((_edge->tail->pos[2] + _edge->head->pos[2]) / 2.0));
 }
 
 double getEdgeLength(hePtrEdge _edge)
@@ -60,86 +80,96 @@ double getEdgeLength(hePtrEdge _edge)
     return length;
 }
 
-void sortByAscOrder(int *t, int size)
-{
-    bool en_desordre = true;
-    for (int i = 0; i < size && en_desordre; ++i)
-    {
-	  en_desordre = false;
-	  for (int j = 1; j < size - i; ++j)
-		if (t[j-1] > t[j])
-		{
-		std::swap(t[j], t[j-1]);
-		en_desordre = true;
-	  }
-    }
-}
-
 void deleteFaceFromMesh(hePtrMesh _mesh, hePtrFace _face)
 {
     bool found = 0;
-    for (int i=0; i<_mesh->nFaces-1; i++)
+    for (int i = 0; i < _mesh->nFaces-1; i++)
     {
-	  if (_mesh->faces[i]->id == _face->id)
-		found = 1;
-	  if (found)
-		_mesh->faces[i] = _mesh->faces[i+1];
+	  if (_mesh->faces[i] == _face) found = 1;
+	  if (found) _mesh->faces[i] = _mesh->faces[i+1];
     }
     _mesh->nFaces--;
+    _mesh->faces[_mesh->nFaces] = NULL;
 }
 
 void deleteEdgeFromMesh(hePtrMesh _mesh, hePtrEdge _edge)
 {
     bool found = 0;
-    for (int i = 0; i < _mesh->nEdges-1; i++)
+    for(int i = 0; i < _mesh->nEdges-1; i++)
     {
-	  if (_mesh->edges[i]->id == _edge->id)
-		found = 1;
+	  if (lstAretes[i].ptrEdge == _edge) lstAretes.erase(lstAretes.begin()+i);
+	  if (_mesh->edges[i] == _edge) found = 1;
 	  if (found)
+	  {
 		_mesh->edges[i] = _mesh->edges[i+1];
+	  }
     }
     _mesh->nEdges--;
+    _mesh->edges[_mesh->nEdges] = NULL;
 }
 
 void deleteVertexFromMesh(hePtrMesh _mesh, hePtrVert _vert)
 {
     bool found = 0;
-    for (int i=0; i<_mesh->nVerts-1; i++)
+    for(int i = 0; i < _mesh->nVerts-1; i++)
     {
-	  if (_mesh->verts[i]->id == _vert->id)
-		found = 1;
+	  if (_mesh->verts[i] == _vert) found = 1;
 	  if (found)
+	  {
 		_mesh->verts[i] = _mesh->verts[i+1];
+	  }
     }
     _mesh->nVerts--;
+    _mesh->verts[mesh->nVerts] = NULL;
 }
 
-void updateEdgeList()
+void updateEdgeList(hePtrMesh _mesh)
 {
     lstAretes.clear();
-    Arete arete;
-    arete.edge = NULL;
-    arete.length = 0.0;
-    for (int i = 0; i < mesh->nEdges; i++)
+    EdgeLength e;
+    for (int i = 0; i < _mesh->nEdges; i++)
     {
-	  arete.edge = mesh->edges[i];
-	  arete.length = getEdgeLength(arete.edge);
-	  lstAretes.push_back(arete);
+	  e.ptrEdge = _mesh->edges[i];
+	  e.length = getEdgeLength(e.ptrEdge);
+	  lstAretes.push_back(e);
     }
+    sort(lstAretes.begin(), lstAretes.end(), sortLength);
 }
 
 
-bool isBorderEdge(heEdge * _edge)
+bool isBorderEdge(hePtrEdge _edge)
 {
-    int min = 0;
+    hePtrVert vTail = _edge->tail;
+    hePtrVert vHead = _edge->head;
     hePtrListItem it;
-    for (it = _edge->faces.head; it != NULL; it = it->next)
-	  min++;
-    for (it = _edge->twin->faces.head; it != NULL; it = it->next)
-	  min++;
+    int sz1 = 0, sz2 = 0;
 
-    if (min == 1) return 1;
-    return 0;
+    sz1 = heList_Size(&_edge->faces);
+    sz2 = heList_Size(&_edge->twin->faces);
+
+    if (sz1 == 0 || sz2 == 0) return true;
+    else
+    {
+	  hePtrEdge edge, twin;
+	  for (it = vTail->edges.head; it != NULL; it = it->next)
+	  {
+		edge = ((hePtrEdge)it->data);
+		twin = ((hePtrEdge)it->data)->twin;
+		sz1 = heList_Size(&edge->faces);
+		sz2 = heList_Size(&twin->faces);
+		if (sz1 == 0 || sz2 == 0) return true;
+	  }
+
+	  for (it = vHead->edges.head; it != NULL; it = it->next)
+	  {
+		edge = ((hePtrEdge)it->data);
+		twin = ((hePtrEdge)it->data)->twin;
+		sz1 = heList_Size(&edge->faces);
+		sz2 = heList_Size(&twin->faces);
+		if (sz1 == 0 || sz2 == 0) return true;
+	  }
+    }
+    return false;
 }
 
 
@@ -194,8 +224,6 @@ int isInterior(mlVec3 _d, heEdge * _edge)
     face1 = ((hePtrFace)_edge->faces.head->data);
     face2 = ((hePtrFace)twin->faces.head->data);
 
-
-
     for (it = face1->edges.head; it != NULL; it = it->next)
     {
 	  mlVec3_Copy(tmp, ((hePtrEdge)it->data)->tail->pos);
@@ -242,189 +270,142 @@ double computeCost(double _d, heEdge * _edge)
 void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 {
     /* fonction qui realise la fusion de deux points d'une arete (edge collapse) */
+    //printf("Contraction d'arête en cours...\n");
 
-    printf("Phase 1 starts...\n");
+    hePtrVert vTail = _edge->tail;
+    hePtrVert vHead = _edge->head;
+    hePtrVert vFar = NULL;
+    hePtrEdge edgeH = NULL, edgeT = NULL;
 
-    hePtrVert v1 = _edge->tail;
-    hePtrVert v2 = _edge->head;
-    hePtrVert v3, v4;
+    hePtrFace faceA = NULL, faceB = NULL;
+    faceA = ((hePtrFace)_edge->faces.head->data);
+    faceB = ((hePtrFace)_edge->twin->faces.head->data);
+
+    if (faceA == NULL || faceB == NULL) printf("Une face est NULLE\n");
+
     mlVec3 middle;
-    double x = (v1->pos[0] + v2->pos[0]) / 2.0;
-    double y = (v1->pos[1] + v2->pos[1]) / 2.0;
-    double z = (v1->pos[2] + v2->pos[2]) / 2.0;
-    mlVec3_Set(middle, x, y, z);
-
-    hePtrFace face1 = NULL, face2 = NULL, mface1 = NULL, mface2 = NULL, face3 = NULL;
-    hePtrEdge edge1 = NULL, dedge1 = NULL, medge1 = NULL, bedge1 = NULL, edge2 = NULL, dedge2 = NULL, medge2 = NULL, bedge2 = NULL;
+    getEdgeMiddle(_edge, middle);
 
     hePtrListItem it;
 
-    face1 = (hePtrFace)_edge->faces.head->data; // On récupère la face liée à l'arête passée en paramètre
-    for (it = face1->edges.head; it != NULL; it = it->next) // On cherche l'arête à sauvegarder de la face (ci-dessus) qui va être supprimée
+    // On parcourt les arêtes de la face A qui va être supprimée
+    for (it = faceA->edges.head; it != NULL; it = it->next)
     {
-	  if (((hePtrEdge)it->data)->tail->id == v2->id)
+	  if (((hePtrEdge)it->data)->tail == vHead)
 	  {
-		edge1 = (hePtrEdge)it->data; // On trouve l'arête
-		v3 = edge1->head; // On déduit le sommet qu'il faudra mettre à jour
+		edgeH = ((hePtrEdge)it->data); // On récupère l'arête côté vHead
+		vFar = edgeH->head; // Ainsi que le 3e sommet de la face
+	  }
+	  if (((hePtrEdge)it->data)->head == vTail)
+		edgeT = ((hePtrEdge)it->data); // On récupère l'arête côté vTail
+    }
+    heList_Del_Item(&vFar->edges, edgeT); // On supprime l'arête reliée à vTail de la liste d'arêtes de vFar car elle va être supprimée
+    heList_Del_Item(&vHead->edges, edgeH); // On supprime l'arête reliée à vHead de la liste d'arêtes de vHead ---
+    edgeH->twin->twin = edgeT->twin; // On rattache les twins des arêtes qui vont être supprimées
+    edgeT->twin->twin = edgeH->twin; // ---
+
+    for (it = faceA->edges.head; it != NULL; it = it->next)
+    {
+	  heList_Del_Item(&faceA->edges, ((hePtrEdge)it->data));
+	  if (((hePtrEdge)it->data) != _edge)
+	  {
+		deleteEdgeFromMesh(_mesh, ((hePtrEdge)it->data));
 	  }
     }
-    for (it = v3->edges.head; it != NULL; it = it->next) // On cherche l'arête à supprimer
+    deleteFaceFromMesh(_mesh, faceA); // On supprime la faceA du mesh
+
+    for (it = faceB->edges.head; it != NULL; it = it->next)
     {
-	  if (((hePtrEdge)it->data)->head->id == v1->id)
+	  if (((hePtrEdge)it->data)->tail == vTail)
 	  {
-		dedge1 = (hePtrEdge)it->data;
+		edgeT = ((hePtrEdge)it->data);
+		vFar = edgeT->head;
+	  }
+	  if (((hePtrEdge)it->data)->head == vHead)
+		edgeH = ((hePtrEdge)it->data);
+    }
+    edgeT->twin->head = vHead;
+    heList_Del_Item(&vFar->edges, edgeH);
+    heList_Del_Item(&vTail->edges, edgeT);
+    edgeH->twin->twin = edgeT->twin; // On rattache les twins des arêtes qui vont être supprimées
+    edgeT->twin->twin = edgeH->twin;
+
+    for (it = faceB->edges.head; it != NULL; it = it->next)
+    {
+	  heList_Del_Item(&faceB->edges, ((hePtrEdge)it->data));
+	  if (((hePtrEdge)it->data) != _edge->twin)
+	  {
+		deleteEdgeFromMesh(_mesh, ((hePtrEdge)it->data));
 	  }
     }
-    mface1 = (hePtrFace)dedge1->twin->faces.head->data; // On récupère la face qui va être refaite
-    for (it = mface1->edges.head; it != NULL; it = it->next) // On cherche l'arête qui va être raccordée
+    deleteFaceFromMesh(_mesh, faceB); // On supprime la faceA du mesh
+
+    heList_Del_Item(&vHead->edges, _edge->twin);
+    heList_Del_Item(&vTail->edges, _edge);
+    deleteEdgeFromMesh(_mesh, _edge->twin);
+    deleteEdgeFromMesh(_mesh, _edge);
+
+    for (it = vTail->edges.head; it != NULL; it = it->next)
     {
-	  if (((hePtrEdge)it->data)->head->id == v1->id)
-	  {
-		medge1 = (hePtrEdge)it->data;
-		v4 = medge1->tail;
-	  }
-	  if (((hePtrEdge)it->data)->tail->id == v3->id)
-	  {
-		bedge1 = (hePtrEdge)it->data;
-	  }
-    }
-    face3 = (hePtrFace)medge1->twin->faces.head->data; // On récupère la face qui va être allongée
-
-    printf("Phase 1 middle\n");
-
-    heList_Del_Item(&_edge->faces, face1); // On supprime toute trace de la face à supprimer dans les listes de faces des arêtes de la face
-    heList_Del_Item(&edge1->faces, face1);
-    heList_Del_Item(&dedge1->faces, face1);
-    //heList * e1 = &face1->edges;
-    //heList_Free(&e1); // On détruit la liste d'arêtes de la face à supprimer
-
-    deleteFaceFromMesh(_mesh, face1); // On supprime la face dans la liste du mesh
-
-    heList_Del_Item(&v1->edges, dedge1->twin);
-    heList_Del_Item(&v3->edges, dedge1);
-
-    heList_Del_Item(&mface1->edges, dedge1);
-    //heList_Del_Item(&v1->edges, dedge1);
-
-    deleteEdgeFromMesh(_mesh, dedge1->twin);
-    deleteEdgeFromMesh(_mesh, dedge1);
-
-    // Redéfinition de la mface1
-    heList_Clear(&mface1->edges);
-    heList_Push_Back (&mface1->edges, bedge1);
-    heList_Push_Back (&mface1->edges, medge1);
-    heList_Push_Back (&mface1->edges, edge1);
-
-    medge1->head = v2; // Liaison avec v2
-
-    printf("Phase 1 done !\n");
-
-    /************************************************************************************************/
-
-    printf("Phase 2 starts...\n");
-
-    face2 = (hePtrFace)_edge->twin->faces.head->data; // On récupère la face liée à l'arête passée en paramètre
-    for (it = face2->edges.head; it != NULL; it = it->next) // On cherche l'arête à sauvegarder de la face (ci-dessus) qui va être supprimée
-    {
-	  if (((hePtrEdge)it->data)->head->id == v2->id)
-	  {
-		edge2 = (hePtrEdge)it->data; // On trouve l'arête
-		v3 = edge2->tail; // On déduit le sommet qu'il faudra mettre à jour
-	  }
-    }
-    for (it = v1->edges.head; it != NULL; it = it->next) // On cherche l'arête à supprimer
-    {
-	  if (((hePtrEdge)it->data)->head->id == v3->id)
-	  {
-		dedge2 = (hePtrEdge)it->data;
-	  }
-    }
-    if (dedge2 != NULL) printf("Un truc dans dedge2\n");
-    else printf("dedge2 est NULL\n");
-
-    hePtrEdge twdedge2 = dedge2->twin;
-    if (twdedge2 != NULL) printf("Un truc dans twdedge2\n");
-    else printf("twdedge2 est NULL\n");
-    mface2 = (hePtrFace)twdedge2->faces.head->data; // On récupère la face qui va être refaite
-    for (it = mface2->edges.head; it != NULL; it = it->next) // On cherche l'arête qui va être raccordée
-    {
-	  if (((hePtrEdge)it->data)->tail->id == v1->id)
-	  {
-		medge2 = (hePtrEdge)it->data;
-		v4 = medge2->head;
-	  }
-	  if (((hePtrEdge)it->data)->head->id == v3->id)
-	  {
-		bedge2 = (hePtrEdge)it->data;
-	  }
-    }
-    //face3 = (hePtrFace)medge1->twin->faces.head->data; // On récupère la face qui va être allongée
-
-    printf("Phase 2 - middle\n");
-
-    heList_Del_Item(&_edge->faces, face2); // On supprime toute trace de la face à supprimer dans les listes de faces des arêtes de la face
-    heList_Del_Item(&edge2->faces, face2);
-    heList_Del_Item(&dedge2->faces, face2);
-    //heList * e2 = &face2->edges;
-    //heList_Free(&e2); // On détruit la liste d'arêtes de la face à supprimer
-
-    deleteFaceFromMesh(_mesh, face2); // On supprime la face dans la liste du mesh
-
-    heList_Del_Item(&v1->edges, dedge2);
-    heList_Del_Item(&v3->edges, dedge2->twin);
-
-    heList_Del_Item(&mface2->edges, dedge2);
-    //heList_Del_Item(&v1->edges, dedge1);
-
-    deleteEdgeFromMesh(_mesh, dedge2->twin);
-    deleteEdgeFromMesh(_mesh, dedge2);
-
-    // Redéfinition de la mface1
-    heList_Clear(&mface2->edges);
-    heList_Push_Back(&mface2->edges, bedge2);
-    heList_Push_Back(&mface2->edges, edge2);
-    heList_Push_Back(&mface2->edges, medge2);
-
-    medge2->tail = v2; // Liaison avec v2
-
-    printf("Phase 2 done !\n");
-
-    for (it = face3->edges.head; it != NULL; it = it->next)
-    {
-	  if (((hePtrEdge)it->data)->tail->id == v1->id)
-		((hePtrEdge)it->data)->tail = v2;
-	  if (((hePtrEdge)it->data)->head->id == v1->id)
-		((hePtrEdge)it->data)->head = v2;
+	  ((hePtrEdge)it->data)->tail = vHead;
+	  ((hePtrEdge)it->data)->twin->head = vHead;
+	  heList_Push_Back(&vHead->edges, ((hePtrEdge)it->data));
     }
 
-    heList_Del_Item(&v2->edges, _edge->twin);
+    deleteVertexFromMesh(_mesh, vTail);
 
-    heList_Push_Back(&v2->edges, medge2);
-    heList_Push_Back(&v2->edges, medge1->twin);
+    // On place le sommet restant au centre de l'arête supprimée
+    mlVec3_Copy(vHead->pos, middle);
 
-    //heList * e = &v1->edges;
-    //heList_Free(&e);
-
-    deleteVertexFromMesh(_mesh, v1);
-
-    mlVec3_Copy(v2->pos, middle);
-
-    
+    //printf("Contraction faite.\n");
 }
 
 
-void simpleMeshSimplification()
+void simpleMeshSimplification(hePtrMesh _mesh)
 {
-
+    printf("AVANT:\n");
+    printf("NbVerts: %d\n", _mesh->nVerts);
+    printf("NbEdges: %d\n", _mesh->nEdges);
+    printf("NbFaces: %d\n\n", _mesh->nFaces);
+    updateEdgeList(_mesh);
+    bool working = 1;
+    int i = 0, n = 0;
+    while(working)
+    //for (int j = 0; j < 2; j++)
+    {
+	  i = 0;
+	  working = 0;
+	  while(lstAretes[i].length < epsilon && i < (int)lstAretes.size())
+	  {
+		if (isBorderEdge(lstAretes[i].ptrEdge) == false)
+		{
+		    //printf("i: %d - length: %f\n", i, lstAretes[i].length);
+		    edgeCollapse(_mesh, lstAretes[i].ptrEdge);
+		    working = 1;
+		}
+		//else printf("i: %d - Arête ignorée\n", i);
+		i++;
+	  }
+	  if (working) updateEdgeList(_mesh);
+	  n++;
+	  printf("Passe %d\n", n);
+	  printf("Nombre aretes contractees: %d\n", i);
+    }
+    printf("APRES:\n");
+    printf("NbVerts: %d\n", _mesh->nVerts);
+    printf("NbEdges: %d\n", _mesh->nEdges);
+    printf("NbFaces: %d\n\n", _mesh->nFaces);
+    printf("Nombre de passes: %d\n\n", n);
 }
 
 
 void meshDisplay(heMesh * _mesh)
 {
-    glColor3f(0.0, 0.0, 0.0);
+    //glColor3f(0.0, 0.0, 0.0);
     int n = 0;
     hePtrListItem it;
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     for(int i = 0; i < _mesh->nFaces; ++i)
     {
 	  glBegin(GL_POLYGON);
@@ -437,15 +418,20 @@ void meshDisplay(heMesh * _mesh)
 	  }
 	  glEnd();
     }
-    glColor3f(1.0, 0.0, 0.0);
+    /*glColor3f(1.0, 0.0, 0.0);
     glLineWidth(3.0);
     glDisable(GL_LIGHTING);
     glBegin(GL_LINES);
-	  glVertex3dv(currEdge->tail->pos);
-	  glVertex3dv(currEdge->head->pos);
+    glVertex3dv(currEdge->tail->pos);
+    glVertex3dv(currEdge->head->pos);
+    glEnd();
+    glColor3f(1.0, 01.0, 0.0);
+    glPointSize(5.0);
+    glBegin(GL_POINTS);
+    glVertex3dv(currEdge->head->pos);
     glEnd();
     glEnable(GL_LIGHTING);
-    glLineWidth(1.0);
+    glLineWidth(1.0);*/
 }
 
 
@@ -455,7 +441,8 @@ void displayGL()
 
     glPushMatrix();
     glMultMatrixd(mlTbGetRotation());
-    meshDisplay(mesh);
+    if (OriginalDisplay) meshDisplay(mesh);
+    else meshDisplay(simpleMesh);
     glPopMatrix();
 
     glutSwapBuffers();
@@ -517,11 +504,30 @@ void keyboardGL(unsigned char _k, int _x, int _y)
     switch(_k)
     {
     case 't':
-	  edgeCollapse(mesh, currEdge);
+	  if (!isBorderEdge(currEdge)) edgeCollapse(simpleMesh, currEdge);
 	  break;
 
     case 'p':
 	  idCurrEdge++;
+	  break;
+    case 'm':
+	  idCurrEdge--;
+	  break;
+
+    case 'i':
+	  if (isBorderEdge(currEdge)) printf("ARETE DE BORD\n");
+	  else printf("ARETE NORMALE\n");
+
+    case 's':
+	  printf("Simplification en cours...\n");
+	  simpleMeshSimplification(simpleMesh);
+	  printf("Simplification faite.\n");
+	  break;
+
+    case 'b':
+	  OriginalDisplay = !OriginalDisplay;
+	  if (OriginalDisplay) cout<<"Mesh original"<<endl;
+	  else cout<<"Mesh simplifié"<<endl;
 	  break;
     }
 
@@ -610,8 +616,11 @@ int main(int _argc, char ** _argv)
 	  return EXIT_FAILURE;
     }
     printf("Done.\n\n");
+
     heMesh_Normalize(mesh);
     heMesh_Compute_Normals(mesh);
+
+    simpleMesh = heMesh_New_Copy(mesh);
 
     posX = (glutGet(GLUT_SCREEN_WIDTH ) - winX) / 2;
     posY = (glutGet(GLUT_SCREEN_HEIGHT) - winY) / 2;
