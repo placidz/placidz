@@ -144,3 +144,8 @@ void saveFilePTS2(string _filename, mlVec3 _ctrl[MAX][MAX], int _size_u, int _si
     }
     fclose(fichier);
 }
+
+std::vector<std::vector<Point3D> > loadFilePGMtoPTS2(std::string _filename, int * _u, int * _v)
+{
+
+}

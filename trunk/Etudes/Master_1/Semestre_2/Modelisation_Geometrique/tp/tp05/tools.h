@@ -31,6 +31,8 @@ std::vector<Point3D> loadFilePTS(std::string _filename);
 std::vector<std::vector<Point3D> > loadFilePTS2(std::string _filename, int * _u, int * _v);
 void saveFilePTS2(std::string _filename, mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v);
 
+std::vector<std::vector<Point3D> > loadFilePGMtoPTS2(std::string _filename, int * _u, int * _v);
+
 
 template <class T>
 T ** T_Array2D(int _dim1, int _dim2)
