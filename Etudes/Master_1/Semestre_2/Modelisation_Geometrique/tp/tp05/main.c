@@ -5,7 +5,6 @@
 #include <string>
 #include <limits.h>
 
-#include "OutilsPGM.h"
 #include "Bezier.h"
 #include "BSpline.h"
 #include "tools.h"
@@ -14,24 +13,24 @@
 #include "defines.h"
 
 #ifdef __APPLE__
-    #include <OpenGL/gl.h>
-    #include <OpenGL/glu.h>
-    #include <GLUT/glut.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#include <GLUT/glut.h>
 #else
-    #include <GL/gl.h>
-    #include <GL/glu.h>
-    #include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glut.h>
 #endif
 
 extern "C"
 {
-    #include <he.h>
-    #include <ml.h>
+#include <he.h>
+#include <ml.h>
 }
 
 using namespace std;
 
-string modeLoad;
+string loadMode;
 string filename;
 
 int winX = 800;
@@ -40,6 +39,8 @@ int winY = 600;
 GLuint idBaseDL = 0;
 
 Image texture;
+GLubyte* pTexture = NULL;
+GLuint idTexture;
 
 int size_u = 0, size_v = 0;
 
@@ -47,7 +48,7 @@ float zoom = 10.0;
 int vueOrtho = 15;
 
 mlVec3 PtsUV[MAX][MAX];
-int nBP = 20;
+int nBP = 16;
 mlVec3 bP[MAX2];
 
 int degreBS = 3;
@@ -61,6 +62,8 @@ double barx, bary, barz;
 int AltCtrlShift_State;
 int movePoint = 0;
 int du = -1, dv = -1;
+
+bool view3D = 0;
 
 
 int trouverPoint(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, double _cx, double _cy, double _cz, double _ratioX, double _ratioY, int * _du, int * _dv)
@@ -130,19 +133,52 @@ void drawControlPointsSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
     for (int u = 0; u < _size_u; u++)
 	  for (int v = 0; v < _size_v; v++)
 	  {
-		if (du == u && dv == v) glColor3f(1.0, 1.0, 0.0);
-		else glColor3f(1.0, 0.0, 0.0);
-		glVertex3dv(_ctrl[u][v]);
-	  }
+	  if (du == u && dv == v) glColor3f(1.0, 1.0, 0.0);
+	  else glColor3f(1.0, 0.0, 0.0);
+	  glVertex3dv(_ctrl[u][v]);
+    }
     glEnd();
     glPointSize(1.0);
     glEnable(GL_LIGHTING);
 }
 
-void displayGL()
+void draw3DViewOnly()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // VIEWPORT 0 : ECRAN ENTIER
+    glViewport(0, 0, winX, winY);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(80.0, 1.0, 0.1, 1000.0);
 
+    gluLookAt(0.0, 0.0, zoom, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    glPushMatrix();
+    glMultMatrixd(mlTbGetRotation());
+    glCallList(idBaseDL);
+    if (bRenduBezier)
+    {
+	  cout<<"Surface de Bezier"<<endl;
+	  glBindTexture(GL_TEXTURE_2D, idTexture);
+	  //glDisable(GL_LIGHTING);
+	  glEnable(GL_TEXTURE_2D);
+	  drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
+	  glDisable(GL_TEXTURE_2D);
+	  //glEnable(GL_LIGHTING);
+    }
+    else if (size_u > degreBS && size_v > degreBS)
+    {
+	  cout<<"Surface BSpline"<<endl;
+	  drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
+    }
+    else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
+    drawControlPointsSurface(PtsUV, size_u, size_v);
+    glPopMatrix();
+}
+
+void drawFourViews()
+{
     // VIEWPORT 0 : ECRAN ENTIER
     glViewport(0, 0, winX, winY);
     glMatrixMode(GL_PROJECTION);
@@ -154,10 +190,10 @@ void displayGL()
     glPushMatrix();
     glColor3f(0.0, 0.0, 0.0);
     glBegin(GL_LINES);
-	  glVertex2f(winX/2, 0);
-	  glVertex2f(winX/2, winY);
-	  glVertex2f(0, winY/2);
-	  glVertex2f(winX, winY/2);
+    glVertex2f(winX/2, 0);
+    glVertex2f(winX/2, winY);
+    glVertex2f(0, winY/2);
+    glVertex2f(winX, winY/2);
     glEnd();
     glPopMatrix();
 
@@ -173,12 +209,25 @@ void displayGL()
     glLoadIdentity();
 
     glPushMatrix();
-	  glMultMatrixd(mlTbGetRotation());
-	  glCallList(idBaseDL);
-	  if (bRenduBezier) drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
-	  else if (size_u > degreBS && size_v > degreBS) drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
-	  else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
-	  drawControlPointsSurface(PtsUV, size_u, size_v);
+    glMultMatrixd(mlTbGetRotation());
+    glCallList(idBaseDL);
+    if (bRenduBezier)
+    {
+	  cout<<"Surface de Bezier"<<endl;
+	  glBindTexture(GL_TEXTURE_2D, idTexture);
+	  //glDisable(GL_LIGHTING);
+	  glEnable(GL_TEXTURE_2D);
+	  drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
+	  glDisable(GL_TEXTURE_2D);
+	  //glEnable(GL_LIGHTING);
+    }
+    else if (size_u > degreBS && size_v > degreBS)
+    {
+	  cout<<"Surface BSpline"<<endl;
+	  drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
+    }
+    else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
+    drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 
     // VIEWPORT 2 : HAUT-DROITE
@@ -189,8 +238,8 @@ void displayGL()
     glOrtho(-vueOrtho, vueOrtho, -vueOrtho, vueOrtho, -100, 100);
 
     glPushMatrix();
-	  glCallList(idBaseDL);
-	  drawControlPointsSurface(PtsUV, size_u, size_v);
+    glCallList(idBaseDL);
+    drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 
     // VIEWPORT 3 : BAS-GAUCHE
@@ -202,8 +251,8 @@ void displayGL()
     glRotated(-90, 1, 0, 0); /* on tourne de -90° autour de l'axe x, sens antihoraire */
 
     glPushMatrix();
-	  glCallList(idBaseDL);
-	  drawControlPointsSurface(PtsUV, size_u, size_v);
+    glCallList(idBaseDL);
+    drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 
     // VIEWPORT 4 : BAS-DROITE
@@ -213,10 +262,18 @@ void displayGL()
     glLoadIdentity();
     glOrtho(-vueOrtho, vueOrtho, -vueOrtho, vueOrtho, -100, 100);
     glRotated(90, 0, 1, 0); /* on tourne de -90° autour de l'axe x, sens antihoraire */
+}
+
+void displayGL()
+{
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (view3D) draw3DViewOnly();
+    else drawFourViews();
 
     glPushMatrix();
-	  glCallList(idBaseDL);
-	  drawControlPointsSurface(PtsUV, size_u, size_v);
+    glCallList(idBaseDL);
+    if (!view3D) drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 
     glutSwapBuffers();
@@ -349,6 +406,10 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 	  zoom++;
 	  break;
 
+    case 'z':
+	  view3D = !view3D;
+	  break;
+
     case 'o':
 	  vueOrtho--;
 	  printf("VueOrtho: %d\n", vueOrtho);
@@ -455,28 +516,28 @@ void passiveMotionGL(int _x, int _y)
 
 void drawRepere()
 {
-	 glDisable(GL_LIGHTING);
-	glLineWidth(1.0);
-	// Axe X
-	glColor3f(1.0, 0.0, 0.0);
-	glBegin(GL_LINES);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(1.0, 0.0, 0.0);
-	glEnd();
-	// Axe Y
-	glColor3f(0.0, 1.0, 0.0);
-	glBegin(GL_LINES);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 1.0, 0.0);
-	glEnd();
-	// Axe Z
-	glColor3f(0.0, 0.0, 1.0);
-	glBegin(GL_LINES);
-		glVertex3f(0.0, 0.0, 0.0);
-		glVertex3f(0.0, 0.0, 1.0);
-	glEnd();
-	glLineWidth(1.0);
-	glEnable(GL_LIGHTING);
+    glDisable(GL_LIGHTING);
+    glLineWidth(1.0);
+    // Axe X
+    glColor3f(1.0, 0.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(1.0, 0.0, 0.0);
+    glEnd();
+    // Axe Y
+    glColor3f(0.0, 1.0, 0.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 1.0, 0.0);
+    glEnd();
+    // Axe Z
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_LINES);
+    glVertex3f(0.0, 0.0, 0.0);
+    glVertex3f(0.0, 0.0, 1.0);
+    glEnd();
+    glLineWidth(1.0);
+    glEnable(GL_LIGHTING);
 }
 
 GLuint createBaseDL()
@@ -524,7 +585,23 @@ void initGL()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
+    glEnable(GL_TEXTURE_2D);
+
+    glGenTextures(1, &idTexture);
+    glBindTexture(GL_TEXTURE_2D, idTexture);
+
+    pTexture = (GLubyte*) malloc(sizeof(GLubyte) * texture.size);
+    BasculeImage(&texture, pTexture);
+
+    glTexImage2D(GL_TEXTURE_2D,0,1,256,256,0,GL_LUMINANCE,GL_UNSIGNED_BYTE, pTexture);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+    glTexEnvf(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+
     mlTbInit(winX,winY);
+
     idBaseDL = createBaseDL();
 }
 
@@ -578,20 +655,20 @@ int main(int _argc, char ** _argv)
 
     glutInit(&_argc, _argv);
 
-    modeLoad = _argv[1];
+    loadMode = _argv[1];
     filename = _argv[2];
 
     vector<vector<Point3D> > vPts;
 
-    if (modeLoad == "-pts")
+    if (loadMode == "-pts")
     {
 	  vPts = loadFilePTS2(filename, &size_u, &size_v);
 	  //PtsUV = T_Array2D<mlVec3>(size_u, size_v);
     }
-    else if (modeLoad == "-img")
+    else if (loadMode == "-img")
     {
-	  if (LireImage("hm.pgm", &texture) == -1) return -1;
-
+	  if (LireImage(filename.c_str(), &texture) == -1) return -1;
+	  vPts = loadFilePGMtoPTS2(texture, &size_u, &size_v);
     }
 
     // Recopie dans tableau 2D
@@ -604,7 +681,7 @@ int main(int _argc, char ** _argv)
     }
     vPts.clear();
 
-    //adjustToOrigin(PtsUV, size_u, size_v);
+    adjustToOrigin(PtsUV, size_u, size_v);
 
     posX = (glutGet(GLUT_SCREEN_WIDTH ) - winX) / 2;
     posY = (glutGet(GLUT_SCREEN_HEIGHT) - winY) / 2;

@@ -1,3 +1,5 @@
+#ifndef OUTILSPGM_H
+#define OUTILSPGM_H
 
 #define MAXLIGNE 256
 
@@ -13,3 +15,5 @@ int CreerImage(Image *image, int largeur, int hauteur);	// Allouer image
 int LireImage(char *nom, Image *image);				// Charger et allouer image
 int EcrireImage(char *nom, Image *image);				// Sauvegarder image
 void LibererImage(Image *i);
+
+#endif
