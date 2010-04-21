@@ -186,13 +186,13 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 			for(int i = 0; i < (int)lstCubeMove.size(); i++){
 				for(int j = 0; j < (int)lstCubeMove.at(i).FaceCube.size(); j++){
 					for(int k = 0; k < (int)lstCubeMove.at(i).FaceCube.at(j).lstArete.size(); k++){
-						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.x +=0.05;
-						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.x +=0.05;  
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.x +=0.02;
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.x +=0.02;  
 					}
 				}
 				lstCubeMove.at(i).lstPolyCube.clear();
 			}
-			mlVec3_Set(seedSphere2, seedSphere2[0]+0.05, seedSphere2[1], seedSphere2[2]);
+			mlVec3_Set(seedSphere2, seedSphere2[0]+0.02, seedSphere2[1], seedSphere2[2]);
 			calculeSurface();
 			polygonizeSurface();
 		}
@@ -205,13 +205,13 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 			for(int i = 0; i < (int)lstCubeMove.size(); i++){
 				for(int j = 0; j < (int)lstCubeMove.at(i).FaceCube.size(); j++){
 					for(int k = 0; k < (int)lstCubeMove.at(i).FaceCube.at(j).lstArete.size(); k++){
-						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.x -=0.05;
-						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.x -=0.05;  
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.x -=0.02;
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.x -=0.02;  
 					}
 				}
 				lstCubeMove.at(i).lstPolyCube.clear();
 			}
-			mlVec3_Set(seedSphere2, seedSphere2[0]-0.05, seedSphere2[1], seedSphere2[2]);
+			mlVec3_Set(seedSphere2, seedSphere2[0]-0.02, seedSphere2[1], seedSphere2[2]);
 			calculeSurface();
 			polygonizeSurface();
 		}
