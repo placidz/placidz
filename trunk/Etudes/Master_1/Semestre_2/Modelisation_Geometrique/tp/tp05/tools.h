@@ -17,11 +17,26 @@ extern "C"
 #include <ml.h>
 }
 
+#define MAXLIGNE 256
+
 typedef struct
 {
     double x, y, z;
 } Point3D;
 
+typedef short Pixel;
+
+typedef struct
+{
+    int width, height, size;
+    Pixel *data;
+} Image;
+
+int CreerImage(Image *image, int largeur, int hauteur);	// Allouer image
+int LireImage(const char *nom, Image *image);				// Charger et allouer image
+int EcrireImage(char *nom, Image *image);				// Sauvegarder image
+void LibererImage(Image *i);
+void BasculeImage(const Image *image, GLubyte *I);
 
 Point2D computeIntersection(Point2D a, Point2D b, Point2D c, Point2D d);
 void sortByAscOrder(int *t, int size);
@@ -31,11 +46,11 @@ std::vector<Point3D> loadFilePTS(std::string _filename);
 std::vector<std::vector<Point3D> > loadFilePTS2(std::string _filename, int * _u, int * _v);
 void saveFilePTS2(std::string _filename, mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v);
 
-std::vector<std::vector<Point3D> > loadFilePGMtoPTS2(std::string _filename, int * _u, int * _v);
+std::vector<std::vector<Point3D> > loadFilePGMtoPTS2(Image _image, int * _u, int * _v);
 
 
 template <class T>
-T ** T_Array2D(int _dim1, int _dim2)
+	  T ** T_Array2D(int _dim1, int _dim2)
 {
     T ** t = NULL;
     int dim_allouee = 0;

@@ -45,7 +45,7 @@ bool OriginalDisplay = 1;
 
 std::vector<EdgeLength> lstAretes;
 
-double epsilon = 0.0001;
+double epsilon = 0.1;
 double average = 0.0;
 
 
@@ -270,7 +270,7 @@ double computeCost(double _d, heEdge * _edge)
 void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 {
     /* fonction qui realise la fusion de deux points d'une arete (edge collapse) */
-    //printf("Contraction d'arête en cours...\n");
+    printf("Contraction d'arête en cours... ");
 
     hePtrVert vTail = _edge->tail;
     hePtrVert vHead = _edge->head;
@@ -347,17 +347,22 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 
     for (it = vTail->edges.head; it != NULL; it = it->next)
     {
-	  ((hePtrEdge)it->data)->tail = vHead;
 	  ((hePtrEdge)it->data)->twin->head = vHead;
+	  ((hePtrEdge)it->data)->tail = vHead;
 	  heList_Push_Back(&vHead->edges, ((hePtrEdge)it->data));
     }
+    /*for (it = vTail->edges.head; it != NULL; it = it->next)
+    {
+
+	  heList_Del_Item(&vTail->edges,((hePtrEdge)it->data));
+    }*/
 
     deleteVertexFromMesh(_mesh, vTail);
 
     // On place le sommet restant au centre de l'arête supprimée
     mlVec3_Copy(vHead->pos, middle);
 
-    //printf("Contraction faite.\n");
+    printf("Fait\n");
 }
 
 
