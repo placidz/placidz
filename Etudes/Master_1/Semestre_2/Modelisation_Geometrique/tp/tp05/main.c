@@ -142,6 +142,38 @@ void drawControlPointsSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v)
     glEnable(GL_LIGHTING);
 }
 
+void drawSurface()
+{
+    if (bRenduBezier)
+    {
+	  cout<<"Surface de Bezier"<<endl;
+	  if (loadMode == "-img")
+	  {
+		glBindTexture(GL_TEXTURE_2D, idTexture);
+		glEnable(GL_TEXTURE_2D);
+	  }
+	  drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode, loadMode);
+	  glDisable(GL_TEXTURE_2D);
+    }
+    else if (size_u > degreBS && size_v > degreBS)
+    {
+	  cout<<"Surface BSpline"<<endl;
+	  if (loadMode == "-img")
+	  {
+		glBindTexture(GL_TEXTURE_2D, idTexture);
+		glEnable(GL_TEXTURE_2D);
+	  }
+	  drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode, loadMode);
+	  glDisable(GL_TEXTURE_2D);
+	 /* else
+	  {
+		cout<<"La surface BSpline n'est pas disponible avec ce mode de chargement ("<<loadMode<<")"<<endl;
+		bRenduBezier = 1;
+	  }*/
+    }
+    else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
+}
+
 void draw3DViewOnly()
 {
     // VIEWPORT 0 : ECRAN ENTIER
@@ -157,22 +189,7 @@ void draw3DViewOnly()
     glPushMatrix();
     glMultMatrixd(mlTbGetRotation());
     glCallList(idBaseDL);
-    if (bRenduBezier)
-    {
-	  cout<<"Surface de Bezier"<<endl;
-	  glBindTexture(GL_TEXTURE_2D, idTexture);
-	  //glDisable(GL_LIGHTING);
-	  glEnable(GL_TEXTURE_2D);
-	  drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
-	  glDisable(GL_TEXTURE_2D);
-	  //glEnable(GL_LIGHTING);
-    }
-    else if (size_u > degreBS && size_v > degreBS)
-    {
-	  cout<<"Surface BSpline"<<endl;
-	  drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
-    }
-    else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
+    drawSurface();
     drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 }
@@ -211,22 +228,7 @@ void drawFourViews()
     glPushMatrix();
     glMultMatrixd(mlTbGetRotation());
     glCallList(idBaseDL);
-    if (bRenduBezier)
-    {
-	  cout<<"Surface de Bezier"<<endl;
-	  glBindTexture(GL_TEXTURE_2D, idTexture);
-	  //glDisable(GL_LIGHTING);
-	  glEnable(GL_TEXTURE_2D);
-	  drawBezierSurface(PtsUV, size_u, size_v, bP, nBP, drawMode);
-	  glDisable(GL_TEXTURE_2D);
-	  //glEnable(GL_LIGHTING);
-    }
-    else if (size_u > degreBS && size_v > degreBS)
-    {
-	  cout<<"Surface BSpline"<<endl;
-	  drawBSplineSurface(PtsUV, size_u, size_v, bP, nBP, degreBS, degreBS, drawMode);
-    }
-    else std::cout<<"Le degré utilisé pour la surface BSpline est égal ou supérieur au nombre de points de contrôle sur U et/ou V"<<std::endl;
+    drawSurface();
     drawControlPointsSurface(PtsUV, size_u, size_v);
     glPopMatrix();
 
@@ -262,6 +264,11 @@ void drawFourViews()
     glLoadIdentity();
     glOrtho(-vueOrtho, vueOrtho, -vueOrtho, vueOrtho, -100, 100);
     glRotated(90, 0, 1, 0); /* on tourne de -90° autour de l'axe x, sens antihoraire */
+
+    glPushMatrix();
+    glCallList(idBaseDL);
+    drawControlPointsSurface(PtsUV, size_u, size_v);
+    glPopMatrix();
 }
 
 void displayGL()
@@ -270,11 +277,6 @@ void displayGL()
 
     if (view3D) draw3DViewOnly();
     else drawFourViews();
-
-    glPushMatrix();
-    glCallList(idBaseDL);
-    if (!view3D) drawControlPointsSurface(PtsUV, size_u, size_v);
-    glPopMatrix();
 
     glutSwapBuffers();
 }
@@ -701,6 +703,15 @@ int main(int _argc, char ** _argv)
 
     glutMotionFunc(motionGL);
     glutPassiveMotionFunc(passiveMotionGL);
+
+    cout<<"Aide"<<endl;
+    cout<<" 'r' : changer de mode de rendu"<<endl;
+    cout<<" 'b' : switcher entre Bezier et BSpline"<<endl;
+    cout<<" 'n/N' : diminuer/augmenter l'échantillonage des surfaces"<<endl;
+    cout<<" 'z' : plein écran de la vue 3D"<<endl;
+    cout<<" 'p/m' : zoomer/dézoomer sur la vue 3D"<<endl;
+    cout<<" 'o/l' : zoomer/dézoomer sur les vues planes"<<endl;
+    cout<<" 's' : sauvegarder un fichier .PTS2"<<endl<<endl;
 
     initGL();
     glutMainLoop();

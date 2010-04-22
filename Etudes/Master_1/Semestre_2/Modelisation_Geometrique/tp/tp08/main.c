@@ -45,7 +45,7 @@ bool OriginalDisplay = 1;
 
 std::vector<EdgeLength> lstAretes;
 
-double epsilon = 0.1;
+double epsilon = 2.0;
 double average = 0.0;
 
 
@@ -274,8 +274,8 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 
     hePtrVert vTail = _edge->tail;
     hePtrVert vHead = _edge->head;
-    hePtrVert vFar = NULL;
-    hePtrEdge edgeH = NULL, edgeT = NULL;
+    hePtrVert vThirdA = NULL, vThirdB = NULL;
+    hePtrEdge edgeH = NULL, edgeT = NULL, twedgeH = NULL, twedgeT = NULL, currEdge = NULL;
 
     hePtrFace faceA = NULL, faceB = NULL;
     faceA = ((hePtrFace)_edge->faces.head->data);
@@ -286,59 +286,60 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
     mlVec3 middle;
     getEdgeMiddle(_edge, middle);
 
-    hePtrListItem it;
+    hePtrListItem it, it2;
 
     // On parcourt les arêtes de la face A qui va être supprimée
     for (it = faceA->edges.head; it != NULL; it = it->next)
     {
-	  if (((hePtrEdge)it->data)->tail == vHead)
+	  currEdge = ((hePtrEdge)it->data);
+	  if (currEdge->tail == vHead)
 	  {
-		edgeH = ((hePtrEdge)it->data); // On récupère l'arête côté vHead
-		vFar = edgeH->head; // Ainsi que le 3e sommet de la face
+		edgeH = currEdge; // On récupère l'arête côté vHead
+		twedgeH = currEdge->twin;
+		vThirdA = currEdge->head; // Ainsi que le 3e sommet de la face
 	  }
-	  if (((hePtrEdge)it->data)->head == vTail)
-		edgeT = ((hePtrEdge)it->data); // On récupère l'arête côté vTail
+	  else if (currEdge->head == vTail)
+	  {
+		edgeT = currEdge; // On récupère l'arête côté vTail
+		twedgeT = currEdge->twin;
+	  }
     }
-    heList_Del_Item(&vFar->edges, edgeT); // On supprime l'arête reliée à vTail de la liste d'arêtes de vFar car elle va être supprimée
+    twedgeH->twin = twedgeT;
+    twedgeT->twin = twedgeH;
+    heList_Del_Item(&vThirdA->edges, edgeT); // On supprime l'arête reliée à vTail de la liste d'arêtes de vFar car elle va être supprimée
     heList_Del_Item(&vHead->edges, edgeH); // On supprime l'arête reliée à vHead de la liste d'arêtes de vHead ---
-    edgeH->twin->twin = edgeT->twin; // On rattache les twins des arêtes qui vont être supprimées
-    edgeT->twin->twin = edgeH->twin; // ---
+    heList_Del_Item(&vTail->edges, twedgeT);
+    heList_Push_Back(&vHead->edges, twedgeT);
+    twedgeT->tail = vHead;
 
-    for (it = faceA->edges.head; it != NULL; it = it->next)
-    {
-	  heList_Del_Item(&faceA->edges, ((hePtrEdge)it->data));
-	  if (((hePtrEdge)it->data) != _edge)
-	  {
-		deleteEdgeFromMesh(_mesh, ((hePtrEdge)it->data));
-	  }
-    }
+    deleteEdgeFromMesh(_mesh, edgeH);
+    deleteEdgeFromMesh(_mesh, edgeT);
     deleteFaceFromMesh(_mesh, faceA); // On supprime la faceA du mesh
 
     for (it = faceB->edges.head; it != NULL; it = it->next)
     {
-	  if (((hePtrEdge)it->data)->tail == vTail)
+	  currEdge = ((hePtrEdge)it->data);
+	  if (currEdge->tail == vTail)
 	  {
-		edgeT = ((hePtrEdge)it->data);
-		vFar = edgeT->head;
+		edgeT = currEdge;
+		twedgeT = currEdge->twin;
+		vThirdB = currEdge->head;
 	  }
-	  if (((hePtrEdge)it->data)->head == vHead)
-		edgeH = ((hePtrEdge)it->data);
+	  else if (currEdge->head == vHead)
+	  {
+		edgeH = currEdge;
+		twedgeH = currEdge->twin;
+	  }
     }
-    edgeT->twin->head = vHead;
-    heList_Del_Item(&vFar->edges, edgeH);
+    twedgeH->twin = twedgeT;
+    twedgeT->twin = twedgeH;
     heList_Del_Item(&vTail->edges, edgeT);
-    edgeH->twin->twin = edgeT->twin; // On rattache les twins des arêtes qui vont être supprimées
-    edgeT->twin->twin = edgeH->twin;
+    heList_Del_Item(&vThirdB->edges, edgeH);
+    twedgeT->head = vHead;
 
-    for (it = faceB->edges.head; it != NULL; it = it->next)
-    {
-	  heList_Del_Item(&faceB->edges, ((hePtrEdge)it->data));
-	  if (((hePtrEdge)it->data) != _edge->twin)
-	  {
-		deleteEdgeFromMesh(_mesh, ((hePtrEdge)it->data));
-	  }
-    }
-    deleteFaceFromMesh(_mesh, faceB); // On supprime la faceA du mesh
+    deleteEdgeFromMesh(_mesh, edgeH);
+    deleteEdgeFromMesh(_mesh, edgeT);
+    deleteFaceFromMesh(_mesh, faceB); // On supprime la faceB du mesh
 
     heList_Del_Item(&vHead->edges, _edge->twin);
     heList_Del_Item(&vTail->edges, _edge);
@@ -347,15 +348,11 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 
     for (it = vTail->edges.head; it != NULL; it = it->next)
     {
-	  ((hePtrEdge)it->data)->twin->head = vHead;
-	  ((hePtrEdge)it->data)->tail = vHead;
-	  heList_Push_Back(&vHead->edges, ((hePtrEdge)it->data));
+	  currEdge = ((hePtrEdge)it->data);
+	  heList_Push_Back(&vHead->edges, currEdge);
+	  currEdge->tail = vHead;
+	  currEdge->twin->head = vHead;
     }
-    /*for (it = vTail->edges.head; it != NULL; it = it->next)
-    {
-
-	  heList_Del_Item(&vTail->edges,((hePtrEdge)it->data));
-    }*/
 
     deleteVertexFromMesh(_mesh, vTail);
 
