@@ -77,7 +77,7 @@ void computeBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlV
 }
 
 
-void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv, int _mode)
+void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mu, int _mv, int _mode, std::string _loadMode)
 {
     glDisable(GL_LIGHTING);
     computeBSplineSurface(_ctrl, _size_u, _size_v, _bP, _nBP, _mu, _mv);
@@ -93,26 +93,43 @@ void drawBSplineSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3
 		for (int j = 0; j < _nBP; j++)
 		{
 		    for (int i = 0; i < _nBP; i++)
-		    { 
-			  glColor3f(0.0, 0.9, 0.0);
-			  glBegin(GL_QUADS);
-				glVertex3dv(_bP[i + j*(_nBP+1) + n]);
-				glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
-				glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
-				glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
-			  glEnd();
-
-			  if (_mode == 2)
+		    {
+			  if (_loadMode == "-pts")
 			  {
-				glLineWidth(2.0);
-				glColor3f(0.0, 0.0, 0.0);
-				glBegin(GL_LINE_LOOP);
+				glColor3f(0.0, 0.9, 0.0);
+				glBegin(GL_QUADS);
 				    glVertex3dv(_bP[i + j*(_nBP+1) + n]);
 				    glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
 				    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
 				    glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
 				glEnd();
-				glLineWidth(1.0);
+
+				if (_mode == 2)
+				{
+				    glLineWidth(2.0);
+				    glColor3f(0.0, 0.0, 0.0);
+				    glBegin(GL_LINE_LOOP);
+					  glVertex3dv(_bP[i + j*(_nBP+1) + n]);
+					  glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
+					  glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
+					  glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
+				    glEnd();
+				    glLineWidth(1.0);
+				}
+			  }
+			  else if (_loadMode == "-img")
+			  {
+				glColor3f(1.0, 1.0, 1.0);
+				glBegin(GL_QUADS);
+				    glTexCoord2f((double)i/(_nBP+1) + n, (double)(_nBP+1 - j)/(_nBP+1) + n);
+				    glVertex3dv(_bP[i + j*(_nBP+1) + n]);
+				    glTexCoord2f((double)i/(_nBP+1) + n, (double)(_nBP+1 - j-1)/(_nBP+1) + n);
+				    glVertex3dv(_bP[i + (j+1)*(_nBP+1) + n]);
+				    glTexCoord2f((double)(i+1)/(_nBP+1) + n, (double)(_nBP+1 - j-1)/(_nBP+1) + n);
+				    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1) + n]);
+				    glTexCoord2f((double)(i+1)/(_nBP+1) + n, (double)(_nBP+1 - j)/(_nBP+1) + n);
+				    glVertex3dv(_bP[(i+1) + j*(_nBP+1) + n]);
+				glEnd();
 			  }
 		    }
 		}

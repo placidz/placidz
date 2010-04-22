@@ -55,7 +55,7 @@ void computeBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVe
 }
 
 
-void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mode)
+void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 _bP[MAX2], int _nBP, int _mode, std::string _loadMode)
 {
     glDisable(GL_LIGHTING);
     computeTrianglePascal();
@@ -66,30 +66,43 @@ void drawBezierSurface(mlVec3 _ctrl[MAX][MAX], int _size_u, int _size_v, mlVec3 
     {
 	  for (int i = 0; i < _nBP; i++)
 	  {
-		//glColor3f(0.0, 0.0, 1.0);
-		glBegin(GL_QUADS);
-		    glTexCoord2f((double)i/(_nBP+1),(double)(j/_nBP+1));
-		    glVertex3dv(_bP[i + j*(_nBP+1)]);
-		    glTexCoord2f((double)i/(_nBP+1),(double)((j+1)/_nBP+1));
-		    glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
-		    glTexCoord2f((double)(i+1)/(_nBP+1),(double)((j+1)/_nBP+1));
-		    glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
-		    glTexCoord2f((double)(i+1)/(_nBP+1),(double)((j)/_nBP+1));
-		    glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
-		glEnd();
-
-		/*if (_mode == 2)
+		if (_loadMode == "-img")
 		{
-		    glLineWidth(2.0);
-		    glColor3f(0.0, 0.0, 0.0);
-		    glBegin(GL_LINE_LOOP);
+		    glColor3f(1.0, 1.0, 1.0);
+		    glBegin(GL_QUADS);
+			  glTexCoord2f((double)i/(_nBP+1), (double)(_nBP+1 - j)/(_nBP+1));
+			  glVertex3dv(_bP[i + j*(_nBP+1)]);
+			  glTexCoord2f((double)i/(_nBP+1), (double)(_nBP+1 - j-1)/(_nBP+1));
+			  glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+			  glTexCoord2f((double)(i+1)/(_nBP+1), (double)(_nBP+1 - j-1)/(_nBP+1));
+			  glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+			  glTexCoord2f((double)(i+1)/(_nBP+1), (double)(_nBP+1 - j)/(_nBP+1));
+			  glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+		    glEnd();
+		}
+		else if (_loadMode == "-pts")
+		{
+		    glColor3f(0.0, 0.0, 1.0);
+		    glBegin(GL_QUADS);
 			  glVertex3dv(_bP[i + j*(_nBP+1)]);
 			  glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
 			  glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
 			  glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
 		    glEnd();
-		    glLineWidth(1.0);
-		}*/
+
+		    if (_mode == 2)
+		    {
+			  glLineWidth(2.0);
+			  glColor3f(0.0, 0.0, 0.0);
+			  glBegin(GL_LINE_LOOP);
+				glVertex3dv(_bP[i + j*(_nBP+1)]);
+				glVertex3dv(_bP[i + (j+1)*(_nBP+1)]);
+				glVertex3dv(_bP[(i+1) + (j+1)*(_nBP+1)]);
+				glVertex3dv(_bP[(i+1) + j*(_nBP+1)]);
+			  glEnd();
+			  glLineWidth(1.0);
+		    }
+		}
 	  }
     }
     glLineWidth(1.0);
