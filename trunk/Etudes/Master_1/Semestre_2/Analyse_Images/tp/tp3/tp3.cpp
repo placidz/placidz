@@ -32,7 +32,6 @@ Point RotationO(Point p, float ang)
 	r.x = cos(ang) * p.x - sin(ang) * p.y;
 	r.y = sin(ang) * p.x + cos(ang) * p.y;
 	return r;
-	glBe
 }
 
 Point Homothetie(Point p, float scale)
