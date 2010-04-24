@@ -1,0 +1,7 @@
+tp1. Transformée de Hough
+tp2. Transformée de Fourier
+tp3. Transformations
+tp4. Les projections
+tp5. Quaternions
+tp6. Débruitage de Tikhonov
+tp7. Flots optiques
