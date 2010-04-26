@@ -15,6 +15,9 @@ public:
 	point3D p2;
 	int isPtInter;
 	
+	int numSphere;
+	double potentiel;
+	
 	arete(point3D pt); // (0,0,0) par defaut
 	arete(point3D _p1, point3D _p2);
 	void setArete(point3D _p1, point3D _p2);

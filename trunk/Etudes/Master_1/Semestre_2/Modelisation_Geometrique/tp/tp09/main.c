@@ -218,6 +218,44 @@ void keyboardGL(unsigned char _k, int _x, int _y)
 		break;
 		
 		
+		case 'g':{
+			for(int i = 0; i < (int)lstCube.size(); i++)
+				lstCube.at(i).lstPolyCube.clear();
+				
+			for(int i = 0; i < (int)lstCubeMove.size(); i++){
+				for(int j = 0; j < (int)lstCubeMove.at(i).FaceCube.size(); j++){
+					for(int k = 0; k < (int)lstCubeMove.at(i).FaceCube.at(j).lstArete.size(); k++){
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.y -=0.02;
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.y -=0.02;  
+					}
+				}
+				lstCubeMove.at(i).lstPolyCube.clear();
+			}
+			mlVec3_Set(seedSphere2, seedSphere2[0], seedSphere2[1]-0.02, seedSphere2[2]);
+			calculeSurface();
+			polygonizeSurface();
+		}
+		break;
+		
+		
+		case 'b':{
+			for(int i = 0; i < (int)lstCube.size(); i++)
+				lstCube.at(i).lstPolyCube.clear();
+				
+			for(int i = 0; i < (int)lstCubeMove.size(); i++){
+				for(int j = 0; j < (int)lstCubeMove.at(i).FaceCube.size(); j++){
+					for(int k = 0; k < (int)lstCubeMove.at(i).FaceCube.at(j).lstArete.size(); k++){
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.y +=0.02;
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p2.y +=0.02;  
+					}
+				}
+				lstCubeMove.at(i).lstPolyCube.clear();
+			}
+			mlVec3_Set(seedSphere2, seedSphere2[0], seedSphere2[1]+0.02, seedSphere2[2]);
+			calculeSurface();
+			polygonizeSurface();
+		}
+		break;
 	}
 
 	glutPostRedisplay();
@@ -449,6 +487,7 @@ double potentialFunction(mlVec3 _coord)
 	}
 	return res;
 }
+
 double potentialFunctionSphere2(mlVec3 _coord)
 {
 	/* fonction de calcul de l'equation de potentiel */
@@ -608,22 +647,22 @@ void calculeSurface(){
 		for(int j = 0; j < (int)lstCubeMove.at(i).FaceCube.size(); j++){
 			for(int k = 0; k < (int)lstCubeMove.at(i).FaceCube.at(j).lstArete.size(); k++){
 				lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).p1.pt3DtoMlVec(Ptmp);
-				val = potentialFunction(Ptmp);
+				val = potentialFunctionSphere2(Ptmp);
 				if(val > radiusSphere2){
 					lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).isPtInter = 0;
-					lstCubeMove.at(i).FaceCube.at(j).markSommet.push_back(false);
+					lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).numSphere = 1;
 				}
 				
 				else{
-					val = potentialFunctionSphere2(Ptmp);
+					val = potentialFunction(Ptmp);
 					if(val > radius){
 						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).isPtInter = 0;
-						lstCubeMove.at(i).FaceCube.at(j).markSommet.push_back(false);
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).numSphere = 2;
 					}
 					
 					else{
 						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).isPtInter = 1;
-						lstCubeMove.at(i).FaceCube.at(j).markSommet.push_back(true);
+						lstCubeMove.at(i).FaceCube.at(j).lstArete.at(k).numSphere = 2;
 					}
 				}
 			}	
@@ -638,11 +677,11 @@ void polygonizeSurface(){
 	int test;
 	cout<<"Reste "<<(int)lstCube.size()<<" cubes"<<endl;
 	for(int i = 0; i < (int)lstCube.size(); i++){
-		lstCube.at(i).polygonise();	
+		lstCube.at(i).polygonise(seed, radius);	
 	}
 	
 	for(int i = 0; i < (int)lstCubeMove.size(); i++){
-		lstCubeMove.at(i).polygonise();	
+		lstCubeMove.at(i).polygonise(seedSphere2, radiusSphere2);	
 	}
 	
 }
@@ -654,8 +693,7 @@ void displaySurface()
 	if(affichePolygonSphere1){
 		glColor3f(0.0, 0.0, 1.0);
 		for(int i = 0; i < (int)lstCube.size(); i++){
-			glBegin(GL_LINE_LOOP);
-			//glBegin(GL_POLYGON);
+			glBegin(GL_POLYGON);
 			for(int j = 0; j < (int)lstCube.at(i).lstPolyCube.size(); j++){
 				glVertex3f(lstCube.at(i).lstPolyCube.at(j).x, lstCube.at(i).lstPolyCube.at(j).y, lstCube.at(i).lstPolyCube.at(j).z);
 			}
@@ -664,8 +702,9 @@ void displaySurface()
 	}
 	
 	if(affichePolygonSphere2){	
+		//glColor3f(1.0, 1.0, 0.0);
 		for(int i = 0; i < (int)lstCubeMove.size(); i++){
-			glBegin(GL_LINE_LOOP);
+			glBegin(GL_POLYGON);
 			for(int j = 0; j < (int)lstCubeMove.at(i).lstPolyCube.size(); j++){
 				glVertex3f(lstCubeMove.at(i).lstPolyCube.at(j).x, lstCubeMove.at(i).lstPolyCube.at(j).y, lstCubeMove.at(i).lstPolyCube.at(j).z);
 			}

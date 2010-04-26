@@ -40,7 +40,6 @@ bool bTraceBresenham = 0;
 
 
 
-
 void tracer_naif(Point2D p1, Point2D p2)
 {
     int x1, y1, x2, y2;
@@ -62,13 +61,27 @@ void tracer_naif(Point2D p1, Point2D p2)
     int dx = x2 - x1;
     int dy = y2 - y1;
     glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_POINTS);
     for (int x=x1; x < x2; x++)
     {
 	  int y = y1 + dy * (x - x1) / dx;
-	  glVertex2i(x, y);
+	  setPixel(x, y);
     }
     glEnd();
+}
+
+void tracer_naif2(Point2D p1, Point2D p2)
+{
+	float ar = (p2.y - p1.y)/(p2.x - p1.x);
+	int x = p1.x;
+	int y = p1.y;
+	setPixel(x, y);
+	while (x < p2.x)
+	{
+		x++;
+		float yr = yr + ar;
+		y = (int)(yr);
+		setPixel(x, y);
+	}
 }
 
 void drawPoints(void)
@@ -106,7 +119,7 @@ void displayGL(void)
     {
 	  for (int i=0; i<(int)ListePoints.size()-1; i+=2)
 	  {
-		if (bTraceNaif) tracer_naif(ListePoints[i], ListePoints[i+1]);
+		if (bTraceNaif) tracer_naif2(ListePoints[i], ListePoints[i+1]);
 		if (bTraceBresenham) drawBresenhamLine(ListePoints[i], ListePoints[i+1]);
 	  }
 	  drawPoints();

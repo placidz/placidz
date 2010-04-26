@@ -12,7 +12,7 @@ void cube::setCube(vector<face> lst){
 	FaceCube = lst;
 }
 
-void cube::polygonise(){
+void cube::polygonise(mlVec3 seed, double radius){
 	int numFace = 0;
 	int numSegmentCourant = 0;
 	int numSegmentNext;
@@ -38,7 +38,7 @@ void cube::polygonise(){
 				numSegmentNext = getNextSommet(numSegmentCourant);//On a le sommet actuel, et le suivant
 				//Si le point actuel et le suivant sont l'un a l'interieur et l'autre a l'exterieur
 				if( FaceCube.at(numFace).lstArete.at(numSegmentCourant).isPtInter != FaceCube.at(numFace).lstArete.at(numSegmentNext).isPtInter){
-					lstPolyCube.push_back(FaceCube.at(numFace).lstArete.at(numSegmentCourant).getCentre());//recupere le point au centre du segment
+					lstPolyCube.push_back(getBarycentre(seed, radius, FaceCube.at(numFace).lstArete.at(numSegmentCourant), FaceCube.at(numFace).lstArete.at(numSegmentNext)));//recupere le point au centre du segment
 					//On marque la face pour ne plus revenir dessus
 					markFace.at(numFace) = 1;
 					//Et on change de face, et on recupere l'indice de la nouvelle arete!
@@ -144,3 +144,55 @@ void cube::initSommet(){
 cube& cube::operator=(const cube &op){	
 	FaceCube = op.FaceCube; return *this;	
 }
+
+double cube::potentialFunction(mlVec3 _coord, mlVec3 seed, double radius)
+{
+	/* fonction de calcul de l'equation de potentiel */
+	double d, res;
+	mlVec3 tmp;
+	mlVec3_SubVec( tmp, _coord, seed); 
+	d = mlVec3_Norm(tmp);
+	
+	if(0 <= d && d < radius/(float)3){
+		res = (1-3*(pow(d/radius, 2)));
+	}
+	else if(radius/(float)3 <= d && d < radius){
+		res = (3/2*(pow(1 - d/radius, 2)));
+	}
+	else{
+		res = 0;
+	}
+	return res;
+}
+
+point3D cube::getBarycentre(mlVec3 seed, double radius, arete a1, arete a2){
+	
+	mlVec3 vecP1, vecP2;
+	double potentielP1, potentielP2;
+	
+	a1.p1.pt3DtoMlVec(vecP1);
+	a2.p1.pt3DtoMlVec(vecP2);
+	
+	potentielP1 = potentialFunction(vecP1, seed, radius);
+	potentielP2 = potentialFunction(vecP2, seed, radius);
+	
+	point3D res (	((a1.p1.x * potentielP1 + a2.p1.x * potentielP2) / (potentielP1 + potentielP2)),
+					((a1.p1.y * potentielP1 + a2.p1.y * potentielP2) / (potentielP1 + potentielP2)),
+					((a1.p1.z * potentielP1 + a2.p1.z * potentielP2) / (potentielP1 + potentielP2))
+				);
+	return res;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

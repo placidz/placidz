@@ -59,6 +59,34 @@ void Polygone::supprimerSommet(int _x, int _y)
 	}
 }
 
+int Polygone::getIndexVertex(int _i)
+{
+    int nbSommets = PTS.size();
+    if (_i == -1) return (nbSommets-1);
+    if (_i == nbSommets) return (0);
+    return (_i);
+}
+
+Point2D Polygone::getVertex(int _i)
+{
+    return (PTS[getIndexVertex(_i)]);
+}
+
+
+int Polygone::getIndexHoleVertex(int _nt, int _i)
+{
+    int nbSommets = TROUS[_nt].PTS.size();
+    if (_i == -1) return (nbSommets-1);
+    if (_i == nbSommets) return (0);
+    return (_i);
+}
+
+Point2D Polygone::getHoleVertex(int _nt, int _i)
+{
+    return (TROUS[_nt].PTS[getIndexHoleVertex(_nt, _i)]);
+}
+
+
 bool Polygone::estInterieur(int _x, int _y)
 {
 	int nbIntersect = 0, sz = PTS.size(), xi, yi, x, y, pos1, pos2;
@@ -143,6 +171,215 @@ void Polygone::deplacer(int _x, int _y)
 			TROUS.at(i).PTS.at(j).y += _y;
 		}
 	}
+}
+
+void Polygone::colorer(float _r, float _g, float _b, float _a)
+{
+    int nbSommetsPoly = PTS.size(); // nombre de sommets du polygone
+    int nbTrous = TROUS.size();	// nombre de trous dans le polygone
+    int nbSommetsTrou = 0;		// nombre de sommets pour le trou courant
+
+    // On récupère les ordonnées de chaque sommet du polygone...
+    vector<int>Y;
+    for (int i=0; i<nbSommetsPoly; i++)
+	  Y.push_back(PTS[i].y);
+
+    // ...et aussi de chaque sommet de chaque trou du polygone.
+    for (int ti=0; ti<nbTrous; ti++)
+    {
+	  nbSommetsTrou = TROUS[ti].PTS.size();
+	  for (int i=0; i<nbSommetsTrou; i++)
+		Y.push_back(TROUS[ti].PTS[i].y);
+    }
+
+    sort(Y.begin(), Y.end()); // Tri dans l'ordre croissant
+    reverse(Y.begin(), Y.end()); // Inverse l'ordre
+
+    // On épure la liste des ordonnées afin de virer les doublons
+    vector<int> bornes;
+    int prev, curr;
+    prev = Y[0];
+    for (int i=1; i<(int)Y.size(); i++)
+    {
+	  curr = Y[i];
+	  if (prev != curr) bornes.push_back(prev);
+	  prev = curr;
+    }
+    bornes.push_back(prev);
+    Y.clear();
+
+    // bornes : tableau des bornes de niveaux
+    int nbNiveaux = bornes.size();
+
+    // On active pour chaque niveau, les arêtes qui sont concernées par le niveau courant
+    // BAA[nbSommetsPoly][nbNiveaux] : tableau à 2 dimensions nombre d'arêtes par nombre de niveaux
+    int bornesup, borneinf;
+    int BAA[nbSommetsPoly][nbNiveaux];
+    int sup, inf;
+    Point2D tail, head;
+    bool bSup, bInf;
+    for (int i=0; i<nbSommetsPoly; i++)
+    {
+	  bSup = 0;
+	  bInf= 0;
+	  for (int ni=0; ni<nbNiveaux-1; ni++)
+	  {
+		BAA[i][ni] = 0;
+		bornesup = bornes[ni];
+		borneinf = bornes[ni+1];
+		tail = getVertex(i);
+		head = getVertex(i+1);
+		sup = inf = -1;
+		if (tail.y > head.y)
+		{
+		    sup = tail.y;
+		    inf = head.y;
+		}
+		else
+		{
+		    if (tail.y < head.y)
+		    {
+			  sup = head.y;
+			  inf = tail.y;
+		    }
+		}
+		if (!bSup && sup == bornesup) bSup = 1;
+		if (bSup)
+		{
+		    BAA[i][ni] = 1;
+		    if (!bInf && inf == borneinf) bInf = 1;
+		    if (bInf) bSup = 0;
+		}
+	  }
+    }
+
+    vector<Tab> BTAA;
+
+    for (int ti=0; ti<nbTrous; ti++)
+    {
+	  // tableau 2D : nBSommetsTrou * nbNiv
+	  nbSommetsTrou = TROUS[ti].PTS.size();
+	  Tab tab;
+	  tab.size = nbSommetsTrou;
+	  tab.t = new int * [nbSommetsTrou];
+	  std::fill_n( tab.t, nbSommetsTrou, static_cast<int*>( 0 ) );
+	  for (int dim_allouee = 0; dim_allouee < nbSommetsTrou; ++dim_allouee)
+	  {
+		tab.t[dim_allouee] = new int[nbNiveaux];
+	  }
+	  for (int i=0; i<nbSommetsTrou; i++)
+	  {
+		bSup = 0;
+		bInf= 0;
+		for (int ni=0; ni<nbNiveaux-1; ni++)
+		{
+		    tab.t[i][ni] = 0;
+		    bornesup = bornes[ni];
+		    borneinf = bornes[ni+1];
+		    tail = getHoleVertex(ti, i);
+		    head = getHoleVertex(ti, i+1);
+		    sup = inf = -1;
+		    if (tail.y > head.y)
+		    {
+			  sup = tail.y;
+			  inf = head.y;
+		    }
+		    else
+		    {
+			  if (tail.y < head.y)
+			  {
+				sup = head.y;
+				inf = tail.y;
+			  }
+		    }
+		    if (!bSup && sup == bornesup) bSup = 1;
+		    if (bSup)
+		    {
+			  tab.t[i][ni] = 1;
+			  if (!bInf && inf == borneinf) bInf = 1;
+			  if (bInf) bSup = 0;
+		    }
+		}
+	  }
+	  BTAA.push_back(tab);
+    }
+
+    // On parcourt chaque niveau, on regarde les arêtes actives, on calcule les intersections et on dessine
+    vector<int> AAX;
+    // Pour chaque niveau...
+    for (int ni=0; ni<nbNiveaux-1; ni++)
+    {
+	  bornesup = bornes[ni];
+	  borneinf = bornes[ni+1];
+	  // ...on parcourt le niveau courant...
+	  for (int l=bornesup; l>=borneinf; l--)
+	  {
+		// ...on regarde quelle arête est concernée...
+		for (int i=0; i<nbSommetsPoly; i++)
+		{
+		    // ...si l'arête est concernée, on calcule l'intersection...
+		    if (BAA[i][ni])
+		    {
+			  Point2D I, I1, I2;
+			  Point2D dg(INT_MIN, l);
+			  Point2D dd(INT_MAX, l);
+			  Point2D pa, pb, pc;
+
+			  pa = getVertex(i);
+			  pb = getVertex(i+1);
+
+			  if (pa.y == l) I.x = pa.x;
+			  else if (pb.y == l) I.x = pb.x;
+			  else I = computeIntersection(pa, pb, dg, dd);
+			  AAX.push_back(I.x);
+		    }
+		}
+
+		for (int ti=0; ti<nbTrous; ti++)
+		{
+		    nbSommetsTrou = BTAA[ti].size;
+		    for (int i=0; i<nbSommetsTrou; i++)
+		    {
+			  // ...si l'arête est concernée, on calcule l'intersection...
+			  if (BTAA[ti].t[i][ni])
+			  {
+				Point2D I, I1, I2;
+				Point2D dg(INT_MIN, l);
+				Point2D dd(INT_MAX, l);
+				Point2D pa, pb, pc;
+
+				pa = getHoleVertex(ti, i);
+				pb = getHoleVertex(ti, i+1);
+
+				if (pa.y == l) I.x = pa.x;
+				else if (pb.y == l) I.x = pb.x;
+				else I = computeIntersection(pa, pb, dg, dd);
+				AAX.push_back(I.x);
+			  }
+		    }
+		}
+
+		// ...on trie le tableau des X intersectés dans l'ordre croissant...
+		sort(AAX.begin(), AAX.end());
+
+		// ...et enfin on dessine la ligne de remplissage.
+		for (int i=0; i<=(int)AAX.size()-2; i+=2)
+		{
+		    glColor4f(_r, _g, _b, _a);
+		    glBegin(GL_LINES);
+		    glVertex2i(AAX[i], l);
+		    glVertex2i(AAX[i+1], l);
+		    glEnd();
+		}
+		AAX.clear();
+	  }
+    }
+    bornes.clear();
+}
+
+void Polygone::colorer(float _rgba[])
+{
+    colorer(_rgba[0], _rgba[1], _rgba[2], _rgba[3]);
 }
 
 void Polygone::vider(void)
