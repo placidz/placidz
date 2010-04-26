@@ -271,6 +271,8 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 {
     /* fonction qui realise la fusion de deux points d'une arete (edge collapse) */
     printf("Contraction d'arête en cours... ");
+    
+    cout<<"arete : "<<_edge<<endl;
 
     hePtrVert vTail = _edge->tail;
     hePtrVert vHead = _edge->head;
@@ -304,13 +306,16 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 		twedgeT = currEdge->twin;
 	  }
     }
+    cout<<"edgeT : "<<edgeT<<endl;
+    cout<<"edgeH : "<<edgeH<<endl;
+    cout<<"vThirdA : "<<vThirdA<<endl;
     twedgeH->twin = twedgeT;
     twedgeT->twin = twedgeH;
     heList_Del_Item(&vThirdA->edges, edgeT); // On supprime l'arête reliée à vTail de la liste d'arêtes de vFar car elle va être supprimée
     heList_Del_Item(&vHead->edges, edgeH); // On supprime l'arête reliée à vHead de la liste d'arêtes de vHead ---
     heList_Del_Item(&vTail->edges, twedgeT);
-    heList_Push_Back(&vHead->edges, twedgeT);
     twedgeT->tail = vHead;
+    heList_Push_Back(&vHead->edges, twedgeT);
 
     deleteEdgeFromMesh(_mesh, edgeH);
     deleteEdgeFromMesh(_mesh, edgeT);
@@ -331,10 +336,13 @@ void edgeCollapse(hePtrMesh _mesh, hePtrEdge _edge)
 		twedgeH = currEdge->twin;
 	  }
     }
+    cout<<"edgeT : "<<edgeT<<endl;
+    cout<<"edgeH : "<<edgeH<<endl;
+    cout<<"vThirdB : "<<vThirdB<<endl;
     twedgeH->twin = twedgeT;
     twedgeT->twin = twedgeH;
-    heList_Del_Item(&vTail->edges, edgeT);
     heList_Del_Item(&vThirdB->edges, edgeH);
+    heList_Del_Item(&vTail->edges, edgeT);
     twedgeT->head = vHead;
 
     deleteEdgeFromMesh(_mesh, edgeH);

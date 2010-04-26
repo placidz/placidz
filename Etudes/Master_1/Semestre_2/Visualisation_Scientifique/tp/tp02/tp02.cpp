@@ -17,6 +17,7 @@ typedef unsigned int uint;
 
 #define PI 3.14159265
 
+float poly_color[] = {0.5, 0.5, 0.5, 1.0};
 
 int f1, f2, f3;
 int lastX, lastY;
@@ -36,6 +37,7 @@ bool bModeCreation = 1;
 bool bModeTrous = false;
 bool selectionPoly = false;
 bool verrouDplt = true;
+bool Coloration = 0;
 
 
 void AfficherTexte(float x, float y, float z, void* font, const char* s)
@@ -74,11 +76,9 @@ void AfficherCoordonnees(void)
 void affichage (void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glColor3f(0.0, 1.0, 1.0);
-	poly.tracerAretes(ModeAffichage);
-	poly.tracerSommets();
 	for (int i = 0; i < (int)lPoly.size(); i++)
 	{
+		if (Coloration) lPoly[i].colorer(poly_color);
 		glColor3f(0.0, 0.0, 1.0);
 		lPoly.at(i).tracerAretes(ModeAffichage);
 		lPoly.at(i).tracerSommets();
@@ -91,6 +91,9 @@ void affichage (void)
 			glVertex2i(ptsInter.at(i).x, ptsInter.at(i).y);
 		glEnd();
 	}
+	glColor3f(0.0, 1.0, 1.0);
+	poly.tracerAretes(ModeAffichage);
+	poly.tracerSommets();
 	if (AffichageCoords) AfficherCoordonnees();
 	glutSwapBuffers();
 }
@@ -219,6 +222,9 @@ void clavier (unsigned char key, int x, int y)
 			lPoly.push_back(polyTmp);
 				 }
 		break;
+		case 'r':
+	  		Coloration = !Coloration;
+	  	break;
 	}
 	glutPostRedisplay();	
 }
@@ -347,7 +353,7 @@ int main (int argc, char **argv)
 	glutInitWindowSize(wWidth, wHeight);
 	glutInitWindowPosition(200, 100);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
-	f1 = glutCreateWindow("[TP1] Visualisation Scientifique - Un point dans un polygone");
+	f1 = glutCreateWindow("[TP2] Visualisation Scientifique - Atherton-Weiler");
 	glutDisplayFunc(affichage);
 	glutReshapeFunc(redim);
 	glutKeyboardFunc(clavier);

@@ -1,16 +1,24 @@
 #ifndef POLYGONE_H
 #define POLYGONE_H
 
-#include <vector>
+#include <stdio.h>
 #include <iostream>
-#include <algorithm>
+#include <vector>
 #include <math.h>
-#include <string>
+#include <limits.h>
+#include <algorithm>
 //#include "glut.h"
 #include <GL/glut.h>
 #include "Point2D.h"
+#include "tools.h"
 
 using namespace std;
+
+typedef struct
+{
+    int **t;
+    int size;
+} Tab;
 
 class Polygone
 {
@@ -52,6 +60,14 @@ public:
 	Point2D parcoursPolygone(Point2D ptAnalyse, Polygone p1, Polygone p2, vector<int>& lstMark, vector<Point2D>& listePts, string typeOp);
 	void determinePolyTrou(vector<vector<Point2D> > liste);
 	void unionRecupereTrous(vector<Polygone> trouP1, vector<Polygone>trouP2);
+	
+	Point2D getVertex(int _i);
+    Point2D getHoleVertex(int _nt, int _i);
+    int getIndexVertex(int _i);
+    int getIndexHoleVertex(int _nt, int _i);
+    
+    void colorer(float _r, float _g, float _b, float _a);
+    void colorer(float _rgba[]);
 
 	void vider(void);
 

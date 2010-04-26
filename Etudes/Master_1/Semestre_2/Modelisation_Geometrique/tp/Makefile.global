@@ -40,7 +40,7 @@ GMTOOLS		= $(WORKDIR)/../../gmtools
 # -------------------------------------------------------------------
 SOURCES		= $(wildcard $(SRCDIR)/*.c)
 OBJECTS		= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.o)
-DEPS		= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.d)
+DEPS			= $(SOURCES:$(SRCDIR)/%.c=$(MAKEDIR)/%.d)
 #TARGET		= $(SOURCES:$(SRCDIR)/%.c=$(BINDIR)/%)
 # -------------------------------------------------------------------
 
