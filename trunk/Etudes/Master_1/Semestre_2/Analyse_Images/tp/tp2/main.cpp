@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "glut.h"
+#include <GL/glut.h>
 #include <math.h>
 #include "OutilsPGM.h"
 
@@ -15,7 +15,7 @@ typedef struct
 
 
 int f1, f2;
-Image Im1, Im2;		// Images originales
+Image Im1, Im2, Im3;		// Images originales
 GLubyte* I1=NULL, *I2=NULL;		// Image à afficher
 
 
@@ -73,14 +73,14 @@ void TransformationFourier(Image *in, Image *out)
 	//int tab[8] = { 3, 5, 2, 3, 6, 7, 1, 0 };
 	//tComp[in->width][in->height];
 	Complexe comp;
-	Complexe **tComp;
+	//Complexe **tComp;
 
-	// Allocation de l'espace mémoire nécessaire lorsque tu connait
-	// la taille
-	tComp =(Complexe **)malloc(sizeof(Complexe *)*in->width);
+	Complexe tComp[in->width][in->height];
+	// Allocation de l'espace mémoire nécessaire lorsque tu connais la taille
+	//tComp =(Complexe **)malloc(sizeof(Complexe *)*in->width);
 
-	for (int i = 0; i < in->height; i++)
-		tComp[i]=(Complexe *)malloc(sizeof(Complexe)*in->height);
+	/*for (int i = 0; i < in->height; i++)
+		tComp[i]=(Complexe *)malloc(sizeof(Complexe)*in->height);*/
 
 	//val32=tableau[2][1]; // valeur pour la 3eme ligne, 2eme colonne
 
@@ -106,8 +106,8 @@ void TransformationFourier(Image *in, Image *out)
 			comp.Imag = 0;
 			for (int i = 0; i < in->width; i++)
 			{
-				comp.Reel += (ValMiror(in, x, y) * cos(2*PI*i*x/T));
-				comp.Imag += (ValMiror(in, x, y) * sin(2*PI*i*x/T));
+				comp.Reel += (ValMiror(in, x, y) * cos(-2*PI*i*x/T));
+				comp.Imag += (ValMiror(in, x, y) * sin(-2*PI*i*x/T));
 			}
 			printf("Reel: %f - Imag: %f\n", comp.Reel, comp.Imag);
 			tComp[x][y].Reel = comp.Reel;
@@ -126,11 +126,11 @@ void TransformationFourier(Image *in, Image *out)
 			for (int i = 0; i < in->height; i++)
 			{
 				Complexe c;
-				c.Reel = cos(2*PI*i*x/T);
-				c.Imag = sin(2*PI*i*x/T);
-
-				comp.Reel += (multComplexes(tComp[x][y], c)).Reel;
-				comp.Imag += (multComplexes(tComp[x][y], c)).Imag;
+				c.Reel = cos(-2*PI*i*x/T);
+				c.Imag = sin(-2*PI*i*x/T);
+				c = multComplexes(tComp[x][y], c);
+				comp.Reel += c.Reel;
+				comp.Imag += c.Imag;
 				/*comp.Reel += (tComp[x][y].Reel * cos(2*PI*i*x/T));
 				comp.Imag += (tComp[x][y].Imag * sin(2*PI*i*x/T));*/
 			}
@@ -139,6 +139,34 @@ void TransformationFourier(Image *in, Image *out)
 	}
 }
 
+void ExpansionDynamique(Image *ori, Image *in, Image *out)
+{
+    int i, j;
+    int width = in->width, height = in->height;
+    double maxi1 = -10000000, mini1 = 10000000;
+    double maxi2 = -10000000, mini2 = 10000000;
+    for (j=0; j< height; j++)
+	for (i = 0; i < width; i++)
+	{
+	if (ValMiror(ori, i, j) < mini2) mini2 = ValMiror(ori, i, j);
+	if (ValMiror(ori, i, j) > maxi2) maxi2 = ValMiror(ori, i, j);
+    }
+    for (j=0; j< height; j++)
+	for (i = 0; i < width; i++)
+	{
+	if (ValMiror(in, i, j) < mini1) mini1 = ValMiror(in, i, j);
+	if (ValMiror(in, i, j) > maxi1) maxi1 = ValMiror(in, i, j);
+    }
+    short a, b;
+
+    a = (short)(maxi2-mini2)/(maxi1-mini1);
+    b = (short)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
+    out->size = in->size;
+    for (i = 0; i < out->size; i++)
+    {
+	out->data[i] = (short)(a*in->data[i] + b);
+    }
+}
 
 void initGL(void)
 {
@@ -175,7 +203,8 @@ void ChoixMenuPrincipal(int value)
 	{
 		case 1:
 			TransformationFourier(&Im1, &Im2);
-			BasculeImage(&Im2, I2);
+			ExpansionDynamique(&Im1, &Im2, &Im3);
+			BasculeImage(&Im3, I2);
 			glutSetWindow(f2);
 			glutPostRedisplay();
 		break;
@@ -218,6 +247,7 @@ int main(int argc,char **argv)
 	if (LireImage("carre_bis.pgm",&Im1)==-1) return -1;
 	
 	CreerImage(&Im2, Im1.width,Im1.height);
+	CreerImage(&Im3, Im1.width,Im1.height);
 	//CopierImage(&Im, &Im2);
 
 	/* Allocation de la memoire des images à afficher */
