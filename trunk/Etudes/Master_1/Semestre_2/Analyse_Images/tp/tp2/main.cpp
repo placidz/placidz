@@ -1,148 +1,173 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 #include <limits.h>
 #include <GL/glut.h>
 #include <math.h>
+#include <vector>
+#include <string>
 #include "OutilsPGM.h"
 
 #define PI 3.14159265
 
+using namespace std;
 
 typedef struct
 {
-	double Reel;
-	double Imag;
+    double Reel;
+    double Imag;
 } Complexe;
 
 
-int f1, f2;
+int f1, f2, f3;
 Image Im1, Im2, Im3;		// Images originales
-GLubyte* I1=NULL, *I2=NULL;		// Image à afficher
+GLubyte* I1=NULL, *I2=NULL, *I3=NULL;		// Image à afficher
+
+Complexe tCompX[100000];
+Complexe tCompXY[100000];
 
 
-Complexe *tComp;
-
-
-void ModifierPixel(Image *d, int x, int y, int valeur)
+double Min(double a, double b)
 {
-	if(x>=0 && y>=0 && x<d->width && y<d->height)
-		d->data[y*d->width+x]=valeur;
+    return ((a < b) ? a:b);
 }
 
-void CopierImage(Image *s, Image *d)
+double Max(double a, double b)
 {
-	int xi, yi;
-	for (yi = 0; yi < s->height; yi++)
-		for (xi = 0; xi < s->width; xi++)
-			ModifierPixel(d, xi, yi, s->data[yi*s->width+xi]);
+    return ((a > b) ? a:b);
+}
+
+void ExpansionDynamique2(ImageD *in, Image *out)
+{
+    CreerImage(out, in->width, in->height);
+    double val;
+    double xmin = 999999, xmax = -999999;
+    for (int i = 0; i < in->size; i++)
+    {
+	val = in->data[i];
+	if (val < xmin) xmin = val;
+	if (val > xmax) xmax = val;
+    }
+    for (int i = 0; i < out->size; i++)
+    {
+	val = in->data[i];
+	out->data[i] = (short)(Max(0, Min(255, (val-xmin)*255/(xmax-xmin))));
+    }
 }
 
 void BasculeImage(const Image *image, GLubyte *I)
 {
-	int i,j;
-	for(i=0;i<image->height;i++)
-		for(j=0;j<image->width;j++)
-			I[(image->height-1-i)*image->width+j]=(GLubyte) image->data[i*image->width+j];
-	return;
-}
-
-short ValMiror(Image *d, int x, int y)
-{
-	if(x < 0) x = -x - 1;
-	if(x >= d->width) x = d->width - (x - d->width) - 1;
-	if(y < 0) y = -y - 1;
-	if(y >= d->height) y = d->height - (y - d->height ) - 1;
-	  
-	return d->data[y*d->width+x];
+    int i,j;
+    for(i=0;i<image->height;i++)
+	for(j=0;j<image->width;j++)
+	    I[(image->height-1-i)*image->width+j]=(GLubyte) image->data[i*image->width+j];
+    return;
 }
 
 double getModule(double a, double b)
 {
-	double res = sqrt(pow(a, 2) + pow(b, 2));
-	if (res == 0) return (0);
-	else return (log(res));
+    double res = sqrt(pow(a, 2) + pow(b, 2) + 1);
+    return (log(res));
 }
 
 Complexe multComplexes(Complexe a, Complexe b)
 {
-	Complexe c;
-	c.Reel = a.Reel * b.Reel - a.Imag * b.Imag;
-	c.Imag = a.Reel * b.Imag + a.Imag * b.Reel;
-	return c;
+    Complexe c;
+    c.Reel = a.Reel * b.Reel - a.Imag * b.Imag;
+    c.Imag = a.Reel * b.Imag + a.Imag * b.Reel;
+    return c;
 }
 
 void TransformationFourier(Image *in, Image *out)
 {
-	//int tab[8] = { 3, 5, 2, 3, 6, 7, 1, 0 };
-	//tComp[in->width][in->height];
-	Complexe comp;
-	//Complexe **tComp;
+    ImageD tmpOut;
+    CreerImage(out, in->width, in->height);
+    CreerImageD(&tmpOut, in->width, in->height);
 
-	Complexe tComp[in->width][in->height];
-	// Allocation de l'espace mémoire nécessaire lorsque tu connais la taille
-	//tComp =(Complexe **)malloc(sizeof(Complexe *)*in->width);
-
-	/*for (int i = 0; i < in->height; i++)
-		tComp[i]=(Complexe *)malloc(sizeof(Complexe)*in->height);*/
-
-	//val32=tableau[2][1]; // valeur pour la 3eme ligne, 2eme colonne
-
-	double T = in->width;
-
-	/*for (int k = 0; k < 8; k++)
+    Complexe comp;
+    double N = (double)in->width;
+    for(int i = 0; i < in->height; i++)
+    {
+	for(int k = 0; k < in->width; k++)
 	{
-		comp.Reel = 0;
-		comp.Imag = 0;
-		for (int i = 0; i < 8; i++)
-		{
-			comp.Reel += tab[i] * cos(2*PI*i*k/T);
-			comp.Imag += tab[i] * sin(2*PI*i*k/T);
-		}
-		printf("Reel: %f - Imag: %f\n", comp.Reel/8, comp.Imag/8); 
-	}*/
+	    comp.Reel = 0.0;
+	    comp.Imag = 0.0;
+	    for(int n = 0; n < in->width; n++)
+	    {
+		double val = ValMiror(in, n, i);
+		double ang = (double)(-2*M_PI*k*((double)n/N));
+		comp.Reel += val * cos(ang);
+		comp.Imag += val * sin(ang);
+	    }
+	    comp.Reel = (1/N) * comp.Reel;
+	    comp.Imag = (1/N) * comp.Imag;
 
-	for (int y = 0; y < in->height; y++)
-	{
-		for (int x = 0; x < in->width; x++)
-		{
-			comp.Reel = 0;
-			comp.Imag = 0;
-			for (int i = 0; i < in->width; i++)
-			{
-				comp.Reel += (ValMiror(in, x, y) * cos(-2*PI*i*x/T));
-				comp.Imag += (ValMiror(in, x, y) * sin(-2*PI*i*x/T));
-			}
-			printf("Reel: %f - Imag: %f\n", comp.Reel, comp.Imag);
-			tComp[y][x].Reel = comp.Reel;
-			tComp[y][x].Imag = comp.Imag;
-		}
+	    //tCompX.push_back(comp);
+	    tCompX[i*in->width+k].Reel = comp.Reel;
+	    tCompX[i*in->width+k].Imag = comp.Imag;
 	}
+    }
 
-	T = in->height;
-
-	for (int x = 0; x < in->width; x++)
+    N = (double)in->height;
+    for(int i = 0; i < in->width; i++)
+    {
+	for(int k = 0; k < in->height; k++)
 	{
-		for (int y = 0; y < in->height; y++)
-		{
-			comp.Reel = 0;
-			comp.Imag = 0;
-			for (int i = 0; i < in->height; i++)
-			{
-				Complexe c;
-				c.Reel = cos(-2*PI*i*x/T);
-				c.Imag = sin(-2*PI*i*x/T);
-				c = multComplexes(tComp[y][x], c);
-				comp.Reel += c.Reel;
-				comp.Imag += c.Imag;
-				/*comp.Reel += (tComp[x][y].Reel * cos(2*PI*i*x/T));
-				comp.Imag += (tComp[x][y].Imag * sin(2*PI*i*x/T));*/
-			}
-			ModifierPixel(out, x, y, (int)(getModule(comp.Reel, comp.Imag)));
-		}
+	    comp.Reel = 0.0;
+	    comp.Imag = 0.0;
+	    for(int n = 0; n < in->height; n++)
+	    {
+		Complexe c, tmp;
+		double ang = (double)(-2*M_PI*k*((double)n/N));
+		c.Reel = cos(ang);
+		c.Imag = sin(ang);
+		tmp = multComplexes(tCompX[n*in->width+i], c);
+		comp.Reel += tmp.Reel;
+		comp.Imag += tmp.Imag;
+	    }
+	    comp.Reel = (1/N) * comp.Reel;
+	    comp.Imag = (1/N) * comp.Imag;
+
+	    //tCompXY.push_back(comp);
+	    tCompXY[k*in->width+i].Reel = comp.Reel;
+	    tCompXY[k*in->width+i].Imag = comp.Imag;
 	}
+    }
+
+    for (int i = 0; i < in->size; i++)
+    {
+	double a = tCompXY[i].Reel;
+	double b = tCompXY[i].Imag;
+	//tModules[i] = getModule(a, b);
+	tmpOut.data[i] = getModule(a, b);
+    }
+    ExpansionDynamique2(&tmpOut, out);
 }
 
-void ExpansionDynamique(Image *ori, Image *in, Image *out)
+void ReplacerFrequences(Image *in, Image *out)
+{
+    // Quart 1
+    for (int i = 0; i < in->width/2; i++)
+	for (int j = 0; j < in->height/2; j++)
+	    ModifierPixel(out, i + in->width/2, j + in->height/2, ValMiror(in, i, j));
+
+    // Quart 2
+    for (int i = in->width/2; i < in->width; i++)
+	for (int j = 0; j < in->height/2; j++)
+	    ModifierPixel(out, i - in->width/2, j + in->height/2, ValMiror(in, i, j));;
+
+    // Quart 3
+    for (int i = 0; i < in->width/2; i++)
+	for (int j = in->height/2; j < in->height; j++)
+	    ModifierPixel(out, i + in->width/2, j - in->height/2, ValMiror(in, i, j));;
+
+    // Quart 4
+    for (int i = in->width/2; i < in->width; i++)
+	for (int j = in->height/2; j < in->height; j++)
+	    ModifierPixel(out, i - in->width/2, j - in->height/2, ValMiror(in, i, j));
+}
+
+/*void ExpansionDynamique(Image *ori, Image *in, Image *out)
 {
     int i, j;
     int width = in->width, height = in->height;
@@ -169,128 +194,162 @@ void ExpansionDynamique(Image *ori, Image *in, Image *out)
     {
 	out->data[i] = (short)(a*in->data[i] + b);
     }
-}
+}*/
 
 void initGL(void)
 {
-     glPixelStorei(GL_UNPACK_ALIGNMENT,1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT,1);
 }
 
 void affichage(void)
 {
-	glRasterPos2i(0,0);
-	glDrawPixels(Im1.width, Im1.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, I1);
-	glFlush();
+    glRasterPos2i(0,0);
+    glDrawPixels(Im1.width, Im1.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, I1);
+    glFlush();
 }
 
 void affichage2(void)
 {
-	glRasterPos2i(0,0);
-	glDrawPixels(Im1.width, Im1.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, I2);
-	glFlush();
+    glRasterPos2i(0,0);
+    glDrawPixels(Im1.width, Im1.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, I2);
+    glFlush();
+}
+
+void affichage3(void)
+{
+    glRasterPos2i(0,0);
+    glDrawPixels(Im3.width, Im3.height, GL_LUMINANCE, GL_UNSIGNED_BYTE, I3);
+    glFlush();
 }
 
 void redim(int width,int height)
 {
-	glViewport(0, 0, width, height);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluOrtho2D(0,width,0,height);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+    glViewport(0, 0, width, height);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0,width,0,height);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 }
 
 void ChoixMenuPrincipal(int value)
 {
-	switch (value)
-	{
-		case 1:
-			TransformationFourier(&Im1, &Im2);
-			ExpansionDynamique(&Im1, &Im2, &Im3);
-			BasculeImage(&Im3, I2);
-			glutSetWindow(f2);
-			glutPostRedisplay();
-		break;
-		
-		case 10 :
-			EcrireImage("nomImage.pgm", &Im2);
-		break;
-	
-		case 11 :
-	    	LibererImage(&Im1);
-			free(I1);
-			exit(0); /* On quitte */
-		break;
-	} 
+    switch (value)
+    {
+    case 1:
+	TransformationFourier(&Im1, &Im2);
+	BasculeImage(&Im2, I2);
+	ReplacerFrequences(&Im2, &Im3);
+	BasculeImage(&Im3, I3);
+	break;
+
+    case 10 :
+	EcrireImage("nomImage.pgm", &Im2);
+	break;
+
+    case 11 :
+	LibererImage(&Im1);
+	free(I1);
+	exit(0); /* On quitte */
+	break;
+    }
+    glutPostRedisplay();
+    glutSetWindow(f2);
+    glutPostRedisplay();
+    glutSetWindow(f3);
+    glutPostRedisplay();
 }
 
 void souris (int button, int state, int x, int y)
 {
-	switch(button)
-	{
-		case GLUT_LEFT_BUTTON:
-		break;
-	}
+    switch(button)
+    {
+    case GLUT_LEFT_BUTTON:
+	break;
+    }
 }
 
 void CreerMenu(void)
 {
-	glutCreateMenu(ChoixMenuPrincipal);
+    glutCreateMenu(ChoixMenuPrincipal);
 
-	glutAddMenuEntry("LOL", 1);
-	glutAddMenuEntry("Quitter", 11);
-	
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
+    glutAddMenuEntry("LOL", 1);
+    glutAddMenuEntry("Quitter", 11);
+
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
 int main(int argc,char **argv)
 {
-	glutInit(&argc,argv);
-	
-	if (LireImage("carre_bis.pgm",&Im1)==-1) return -1;
-	
-	CreerImage(&Im2, Im1.width,Im1.height);
-	CreerImage(&Im3, Im1.width,Im1.height);
-	//CopierImage(&Im, &Im2);
+    glutInit(&argc, argv);
 
-	/* Allocation de la memoire des images à afficher */
-	if ( (I1=(GLubyte *) malloc(sizeof(GLubyte)*Im1.width*Im1.height)) == NULL)
-	{
-	     printf("Impossible d'allouer I1\n");
-	     return -1;
-	}
-	if ( (I2=(GLubyte *) malloc(sizeof(GLubyte)*Im1.width*Im1.height)) == NULL)
-	{
-	     printf("Impossible d'allouer I2\n");
-	     return -1;
-	}
+    //std::string filename = argv[0];
+    char* filename = argv[1];
+    printf("Fichier : '%s'\n", filename);
 
-	/* Transformation de l'image donnée en image à afficher */
-	BasculeImage(&Im1, I1);
-	BasculeImage(&Im1, I2);
-	
+    if (LireImage(filename, &Im1) == -1) return -1;
+    //if (LireImage("fourier1.pgm", &Im1) == -1) return -1;
+
+    CreerImage(&Im2, Im1.width,Im1.height);
+    CreerImage(&Im3, Im1.width,Im1.height);
+    //CopierImage(&Im, &Im2);
+
+    /* Allocation de la memoire des images à afficher */
+    if ( (I1=(GLubyte *) malloc(sizeof(GLubyte)*Im1.width*Im1.height)) == NULL)
+    {
+	printf("Impossible d'allouer I1\n");
+	return -1;
+    }
+    if ( (I2=(GLubyte *) malloc(sizeof(GLubyte)*Im1.width*Im1.height)) == NULL)
+    {
+	printf("Impossible d'allouer I2\n");
+	return -1;
+    }
+
+    if ( (I3=(GLubyte *) malloc(sizeof(GLubyte)*Im1.width*Im1.height)) == NULL)
+    {
+	printf("Impossible d'allouer I3\n");
+	return -1;
+    }
+
+    /* Transformation de l'image donnée en image à afficher */
+    BasculeImage(&Im1, I1);
+    BasculeImage(&Im1, I2);
+    BasculeImage(&Im1, I3);
+
     /*--------------------------Fenêtre ----------------------------*/
-	glutInitWindowSize(Im1.width,Im1.height);
-	glutInitWindowPosition(200,100);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
-	f1 = glutCreateWindow("TP4");
-	glutDisplayFunc(affichage);
-	glutReshapeFunc(redim);
-	glutMouseFunc(souris);
-	CreerMenu();
-	initGL();
+    glutInitWindowSize(Im1.width,Im1.height);
+    glutInitWindowPosition(200,100);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
+    f1 = glutCreateWindow("Originale");
+    glutDisplayFunc(affichage);
+    glutReshapeFunc(redim);
+    glutMouseFunc(souris);
+    CreerMenu();
+    initGL();
 
-	/*--------------------------Fenêtre ----------------------------*/
-	glutInitWindowSize(Im1.width,Im1.height);
-	glutInitWindowPosition(220+Im1.width,100);
-	glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
-	f2 = glutCreateWindow("TP4");
-	glutDisplayFunc(affichage2);
-	glutReshapeFunc(redim);
-	glutMouseFunc(souris);
-	CreerMenu();
-	initGL();
+    /*--------------------------Fenêtre ----------------------------*/
+    glutInitWindowSize(Im1.width,Im1.height);
+    glutInitWindowPosition(200 + (20+Im1.width)*1,100);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
+    f2 = glutCreateWindow("TF Discrete");
+    glutDisplayFunc(affichage2);
+    glutReshapeFunc(redim);
+    glutMouseFunc(souris);
+    CreerMenu();
+    initGL();
 
-	glutMainLoop();
-	return 0;
-} 
+    /*--------------------------Fenêtre ----------------------------*/
+    glutInitWindowSize(Im1.width,Im1.height);
+    glutInitWindowPosition(200 + (20+Im1.width)*2,100);
+    glutInitDisplayMode(GLUT_RGBA | GLUT_SINGLE);
+    f3 = glutCreateWindow("Apres replacement des frequences");
+    glutDisplayFunc(affichage3);
+    glutReshapeFunc(redim);
+    glutMouseFunc(souris);
+    CreerMenu();
+    initGL();
+
+    glutMainLoop();
+    return 0;
+}
