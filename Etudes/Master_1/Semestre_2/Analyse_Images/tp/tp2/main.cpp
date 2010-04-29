@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <GL/glut.h>
 #include <math.h>
 #include "OutilsPGM.h"
@@ -22,7 +23,7 @@ GLubyte* I1=NULL, *I2=NULL;		// Image à afficher
 Complexe *tComp;
 
 
-void ModifierPixel(Image *d, int x, int y, short valeur)
+void ModifierPixel(Image *d, int x, int y, int valeur)
 {
 	if(x>=0 && y>=0 && x<d->width && y<d->height)
 		d->data[y*d->width+x]=valeur;
@@ -57,7 +58,9 @@ short ValMiror(Image *d, int x, int y)
 
 double getModule(double a, double b)
 {
-	return (sqrt(pow(a, 2) + pow(b, 2)));
+	double res = sqrt(pow(a, 2) + pow(b, 2));
+	if (res == 0) return (0);
+	else return (log(res));
 }
 
 Complexe multComplexes(Complexe a, Complexe b)
@@ -84,7 +87,7 @@ void TransformationFourier(Image *in, Image *out)
 
 	//val32=tableau[2][1]; // valeur pour la 3eme ligne, 2eme colonne
 
-	double T = in->height;
+	double T = in->width;
 
 	/*for (int k = 0; k < 8; k++)
 	{
@@ -110,12 +113,12 @@ void TransformationFourier(Image *in, Image *out)
 				comp.Imag += (ValMiror(in, x, y) * sin(-2*PI*i*x/T));
 			}
 			printf("Reel: %f - Imag: %f\n", comp.Reel, comp.Imag);
-			tComp[x][y].Reel = comp.Reel;
-			tComp[x][y].Imag = comp.Imag;
+			tComp[y][x].Reel = comp.Reel;
+			tComp[y][x].Imag = comp.Imag;
 		}
 	}
 
-	T = in->width;
+	T = in->height;
 
 	for (int x = 0; x < in->width; x++)
 	{
@@ -128,13 +131,13 @@ void TransformationFourier(Image *in, Image *out)
 				Complexe c;
 				c.Reel = cos(-2*PI*i*x/T);
 				c.Imag = sin(-2*PI*i*x/T);
-				c = multComplexes(tComp[x][y], c);
+				c = multComplexes(tComp[y][x], c);
 				comp.Reel += c.Reel;
 				comp.Imag += c.Imag;
 				/*comp.Reel += (tComp[x][y].Reel * cos(2*PI*i*x/T));
 				comp.Imag += (tComp[x][y].Imag * sin(2*PI*i*x/T));*/
 			}
-			ModifierPixel(out, x, y, getModule(comp.Reel, comp.Imag));
+			ModifierPixel(out, x, y, (int)(getModule(comp.Reel, comp.Imag)));
 		}
 	}
 }
@@ -159,8 +162,8 @@ void ExpansionDynamique(Image *ori, Image *in, Image *out)
     }
     short a, b;
 
-    a = (short)(maxi2-mini2)/(maxi1-mini1);
-    b = (short)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
+    a = (double)(maxi2-mini2)/(maxi1-mini1);
+    b = (double)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
     out->size = in->size;
     for (i = 0; i < out->size; i++)
     {

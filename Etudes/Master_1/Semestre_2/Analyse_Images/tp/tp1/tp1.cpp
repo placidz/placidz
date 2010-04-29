@@ -27,7 +27,9 @@ typedef struct
 int f1, f2, f3;
 
 vector<Point> PTS;
+ptHough ptH;
 
+bool bDrawLine = 0;
 
 void AfficherTexte(float x, float y, float z, void* font, const char* s)
 {
@@ -103,9 +105,25 @@ void AfficherPoints(void)
 	printf("/*** AfficherPoints() - FIN ***/\n");
 }
 
+void drawLine()
+{
+	Point a, b;
+	a.x = 0;
+	a.y = ptH.rho / sin(ptH.theta);
+	
+	b.x = wWidth;
+	b.y = (ptH.rho - (b.x*cos(ptH.theta))) / sin(ptH.theta);
+	glColor3f(1.0, 1.0, 1.0);
+	glBegin(GL_LINES);
+	glVertex2f(a.x, a.y);
+	glVertex2f(b.x, b.y);
+	glEnd();
+}
+
 void affichage (void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
+	if (bDrawLine) drawLine();
 	AfficherPoints();
 	glFlush();
 }
@@ -184,6 +202,38 @@ void souris (int button, int state, int x, int y)
 	glutPostRedisplay();
 }
 
+void souris3(int button, int state, int x, int y)
+{
+	//y = wHeight - y;
+	switch(button)
+	{
+		case GLUT_LEFT_BUTTON:
+			if (state == GLUT_DOWN)
+			{
+				ptH.theta = (x-100)*PI/180; 
+				ptH.rho = y - 150;
+				bDrawLine = 1;
+				//glVertex2f((ph.theta*180/PI)+100, ph.rho+150);
+			}
+		break;
+
+		case GLUT_MIDDLE_BUTTON:
+
+		break;
+
+		case GLUT_RIGHT_BUTTON:
+
+		break;
+	}
+	glutSetWindow(f1);
+	glutPostRedisplay();
+	glutSetWindow(f2);
+	glutPostRedisplay();
+	glutSetWindow(f3);
+	glutPostRedisplay();
+}
+
+
 int main (int argc, char **argv)
 {
 	glutInit(&argc, argv);
@@ -206,7 +256,7 @@ int main (int argc, char **argv)
 	glutDisplayFunc(affichage2);
 	glutReshapeFunc(redim);
 	glutKeyboardFunc(clavier);
-	glutMouseFunc(souris);
+	glutMouseFunc(souris3);
 	
 	/*** Fenetre 3 ***/
 	glutInitWindowSize(wWidth/2, wHeight);
@@ -216,7 +266,7 @@ int main (int argc, char **argv)
 	glutDisplayFunc(affichage3);
 	glutReshapeFunc(redim);
 	glutKeyboardFunc(clavier);
-	glutMouseFunc(souris);
+	glutMouseFunc(souris3);
 
 	glutMainLoop();
 
