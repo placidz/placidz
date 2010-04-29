@@ -21,6 +21,10 @@ int f1, f2;
 Image Im1, Im2;		// Images originales
 GLubyte *I1=NULL, *I2=NULL;		// Image à afficher
 
+double delta = 0.2;
+double lambda = 1.1;
+
+
 short ValMiror(Image *d, int x, int y)
 {
     if(x < 0) x = -x - 1;
@@ -152,8 +156,8 @@ void ExpansionDynamique(Image *ori, Image *in, Image *out)
     }
     short a, b;
 
-    a = (short)(maxi2-mini2)/(maxi1-mini1);
-    b = (short)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
+    a = (double)(maxi2-mini2)/(maxi1-mini1);
+    b = (double)(-maxi2*mini1 + maxi1*mini2)/(maxi1-mini1);
     out->size = in->size;
     for (i = 0; i < out->size; i++)
     {
@@ -192,7 +196,7 @@ void Tikhonov(Image *dep, Image *res, double dt, double lam)
 	printf("distance: %f\n", dist);
 	CopierImageD(&U2, &U1);
     }
-    CopierImageDtoS(&U2, &temp);
+    CopierImageDtoS(&U1, &temp);
     ExpansionDynamique(dep, &temp, res);
 }
 
@@ -230,7 +234,7 @@ void ChoixMenuPrincipal(int value)
     switch (value)
     {
     case 1:
-	Tikhonov(&Im1, &Im2, 0.20, 1.1);
+	Tikhonov(&Im1, &Im2, delta, lambda);
 	BasculeImage(&Im2, I2);
 	break;
 
@@ -256,6 +260,34 @@ void souris (int button, int state, int x, int y)
     case GLUT_LEFT_BUTTON:
 	break;
     }
+}
+
+void clavier (unsigned char key, int x, int y)
+{
+	switch(key)
+	{
+	case 'd':
+	delta -= 0.01;
+	printf("dt: %f\n", delta);
+	break;
+
+	case 'f':
+	delta += 0.01;
+	printf("dt: %f\n", delta);
+	break;
+
+	case 'l':
+	lambda -= 0.1;
+	printf("lambda: %f\n", lambda);
+	break;
+
+	case 'm':
+	lambda += 0.1;
+	printf("lambda: %f\n", lambda);
+	break;
+	
+		
+	}
 }
 
 void CreerMenu(void)
@@ -304,6 +336,7 @@ int main(int argc,char **argv)
     glutDisplayFunc(affichage);
     glutReshapeFunc(redim);
     glutMouseFunc(souris);
+    glutKeyboardFunc(clavier);
     CreerMenu();
     initGL();
 
@@ -314,6 +347,7 @@ int main(int argc,char **argv)
     glutDisplayFunc(affichage2);
     glutReshapeFunc(redim);
     glutMouseFunc(souris);
+    glutKeyboardFunc(clavier);
     CreerMenu();
     initGL();
 
