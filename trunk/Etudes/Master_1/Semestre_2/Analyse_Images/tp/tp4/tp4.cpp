@@ -225,29 +225,30 @@ void souris (int button, int state, int x, int y)
 
 void clavier(unsigned char _k, int _x, int _y)
 {
+	double vitesse = 5.0;
 	if(_k == 27 || _k == 'q' || _k == 'Q')
 		exit(0);
 	switch(_k)
 	{
 		case 'x':
-			angleX+=2;
+			angleX+=vitesse;
 		break;
 		case 'w':
-			angleX-=2;
+			angleX-=vitesse;
 		break;
 		
 		case 'y':
-			angleY+=2;
+			angleY+=vitesse;
 		break;
 		case 't':
-			angleY-=2;
+			angleY-=vitesse;
 		break;
 		
 		case 'z':
-			angleZ+=2;
+			angleZ+=vitesse;
 		break;
 		case 'a':
-			angleZ-=2;
+			angleZ-=vitesse;
 		break;
 	}
 
@@ -277,7 +278,7 @@ int main(int argc,char **argv)
 	glutInitWindowSize(winX, winY);
 	glutInitWindowPosition(200,100);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
-	glutCreateWindow("TP04");
+	glutCreateWindow("TP04 - Projection");
 	glutDisplayFunc(affichage);
 	glutReshapeFunc(redim);
 	glutMouseFunc(souris);

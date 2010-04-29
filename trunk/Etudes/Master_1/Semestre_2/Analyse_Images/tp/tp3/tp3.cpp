@@ -138,7 +138,7 @@ void ChoixMenuPrincipal(int value)
     switch (value)
     {
     case 1:
-	tab[0] = Translation(tab[0], 10, 10);
+	tab[0] = Translation(tab[0], 10, -10);
 	break;
 
     case 2:
@@ -243,7 +243,7 @@ int main(int argc,char **argv)
     glutInitWindowSize(winX, winY);
     glutInitWindowPosition(200,100);
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
-    glutCreateWindow("TP03");
+    glutCreateWindow("TP03 - Transformations");
     glutDisplayFunc(affichage);
     glutReshapeFunc(redim);
     glutKeyboardFunc(clavier);
