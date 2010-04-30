@@ -9,7 +9,7 @@ typedef struct
 	Pixel *data;
 	}Image;
 
-int CreerImage(Image *image, int largeur, int hauteur);	// Allouer image
-int LireImage(char *nom, Image *image);				// Charger et allouer image
-int EcrireImage(char *nom, Image *image);				// Sauvegarder image
+int CreerImage(Image *image, int largeur, int hauteur);
+int LireImage(char *nom, Image *image);
+int EcrireImage(char *nom, Image *image);
 void LibererImage(Image *i);
