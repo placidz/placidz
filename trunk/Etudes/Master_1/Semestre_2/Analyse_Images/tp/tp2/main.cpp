@@ -48,6 +48,7 @@ void ExpansionDynamique2(ImageD *in, Image *out)
 	if (val < xmin) xmin = val;
 	if (val > xmax) xmax = val;
     }
+    printf("min: %f  - max: %f\n", xmin, xmax);
     for (int i = 0; i < out->size; i++)
     {
 	val = in->data[i];
@@ -102,7 +103,6 @@ void TransformationFourier(Image *in, Image *out)
 	    comp.Reel = (1/N) * comp.Reel;
 	    comp.Imag = (1/N) * comp.Imag;
 
-	    //tCompX.push_back(comp);
 	    tCompX[i*in->width+k].Reel = comp.Reel;
 	    tCompX[i*in->width+k].Imag = comp.Imag;
 	}
@@ -128,7 +128,6 @@ void TransformationFourier(Image *in, Image *out)
 	    comp.Reel = (1/N) * comp.Reel;
 	    comp.Imag = (1/N) * comp.Imag;
 
-	    //tCompXY.push_back(comp);
 	    tCompXY[k*in->width+i].Reel = comp.Reel;
 	    tCompXY[k*in->width+i].Imag = comp.Imag;
 	}
@@ -138,7 +137,6 @@ void TransformationFourier(Image *in, Image *out)
     {
 	double a = tCompXY[i].Reel;
 	double b = tCompXY[i].Imag;
-	//tModules[i] = getModule(a, b);
 	tmpOut.data[i] = getModule(a, b);
     }
     ExpansionDynamique2(&tmpOut, out);
