@@ -1,8 +1,8 @@
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <GL/glut.h>
-#include "glut.h"
+#include <GL/glut.h>
+//#include "glut.h"
 #include <math.h>
 
 #define PI 3.14159265
